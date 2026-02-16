@@ -19,8 +19,8 @@
 ║                                                                            ║
 ║   FastAPI provides native async support, automatic OpenAPI documentation,  ║
 ║   Pydantic-based type safety, and industry-leading performance at ~15k     ║
-║   requests/second -- making it the optimal choice for ECTP's REST API      ║
-║   layer.                                                                   ║
+║   requests per second -- making it the optimal choice for the ECTP REST    ║
+║   API layer.                                                               ║
 ║                                                                            ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 ```
@@ -50,17 +50,18 @@
 ┌──────────────────────────────────────────────────────────────────────────┐
 │                                                                          │
 │   ECTP needs a Python web framework for its REST API layer that          │
-│   supports:                                                              │
+│   supports async operations, automatic API documentation, and            │
+│   high performance.                                                      │
 │                                                                          │
-│     * Async operations for high-concurrency workloads                    │
-│     * Automatic API documentation generation                             │
-│     * High performance under enterprise load                             │
-│     * Strong type safety and data validation                             │
+│   Key Requirements:                                                      │
+│   ├── Native asynchronous request handling                               │
+│   ├── Automatic OpenAPI/Swagger documentation generation                 │
+│   ├── High throughput for enterprise workloads                           │
+│   ├── Strong type safety and data validation                             │
+│   └── Manageable learning curve for the team                             │
 │                                                                          │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
-
-ECTP needs a Python web framework for its REST API layer that supports async operations, automatic API documentation, and high performance.
 
 ---
 
@@ -68,25 +69,13 @@ ECTP needs a Python web framework for its REST API layer that supports async ope
 
 > **We will use FastAPI as the API framework for ECTP.**
 
-```
-╔══════════════════════════════════════════════════════════════════════╗
-║                                                                      ║
-║                        >>> FastAPI <<<                                ║
-║                                                                      ║
-║          Modern, fast (high-performance) web framework               ║
-║          for building APIs with Python 3.7+ based on                 ║
-║          standard Python type hints.                                 ║
-║                                                                      ║
-╚══════════════════════════════════════════════════════════════════════╝
-```
-
 ---
 
 ## Alternatives Considered
 
 ### Comparison Matrix
 
-| Criteria | FastAPI | Flask | Django REST |
+| Criteria | FastAPI | Flask | Django REST Framework |
 |:---|:---:|:---:|:---:|
 | **Async Support** | Native | Extension | Limited |
 | **Performance** | ~15k req/s | ~5k req/s | ~3k req/s |
@@ -94,27 +83,103 @@ ECTP needs a Python web framework for its REST API layer that supports async ope
 | **Type Safety** | Pydantic | Manual | Serializers |
 | **Learning Curve** | Low | Low | Medium |
 
-### Detailed Scoring
+### Detailed Evaluation
 
-| Criteria | Weight | FastAPI | Flask | Django REST |
-|:---|:---:|:---:|:---:|:---:|
-| Async Support | 25% | ![10/10](https://img.shields.io/badge/10%2F10-brightgreen?style=flat-square) | ![5/10](https://img.shields.io/badge/5%2F10-yellow?style=flat-square) | ![3/10](https://img.shields.io/badge/3%2F10-red?style=flat-square) |
-| Performance | 25% | ![10/10](https://img.shields.io/badge/10%2F10-brightgreen?style=flat-square) | ![5/10](https://img.shields.io/badge/5%2F10-yellow?style=flat-square) | ![3/10](https://img.shields.io/badge/3%2F10-red?style=flat-square) |
-| Auto Documentation | 20% | ![10/10](https://img.shields.io/badge/10%2F10-brightgreen?style=flat-square) | ![3/10](https://img.shields.io/badge/3%2F10-red?style=flat-square) | ![6/10](https://img.shields.io/badge/6%2F10-yellow?style=flat-square) |
-| Type Safety | 15% | ![10/10](https://img.shields.io/badge/10%2F10-brightgreen?style=flat-square) | ![4/10](https://img.shields.io/badge/4%2F10-orange?style=flat-square) | ![7/10](https://img.shields.io/badge/7%2F10-yellowgreen?style=flat-square) |
-| Learning Curve | 15% | ![9/10](https://img.shields.io/badge/9%2F10-brightgreen?style=flat-square) | ![9/10](https://img.shields.io/badge/9%2F10-brightgreen?style=flat-square) | ![6/10](https://img.shields.io/badge/6%2F10-yellow?style=flat-square) |
-| **Weighted Total** | **100%** | **![9.6](https://img.shields.io/badge/9.6%2F10-brightgreen?style=flat-square)** | **![5.3](https://img.shields.io/badge/5.3%2F10-yellow?style=flat-square)** | **![4.6](https://img.shields.io/badge/4.6%2F10-orange?style=flat-square)** |
+<table>
+<tr>
+<th width="33%">FastAPI</th>
+<th width="33%">Flask</th>
+<th width="33%">Django REST Framework</th>
+</tr>
+<tr>
+<td>
 
-### Performance Visualization
+```
+  ┌──────────────┐
+  │   FastAPI     │
+  │              │
+  │  Score: 9/10 │
+  │  ★★★★★★★★★☆ │
+  │              │
+  │  SELECTED    │
+  └──────────────┘
+```
+
+**Strengths:**
+- Native async/await
+- Auto OpenAPI docs
+- Pydantic validation
+- ~15k req/s throughput
+- Modern Python idioms
+
+**Weaknesses:**
+- Smaller ecosystem
+
+</td>
+<td>
+
+```
+  ┌──────────────┐
+  │    Flask      │
+  │              │
+  │  Score: 6/10 │
+  │  ★★★★★★☆☆☆☆ │
+  │              │
+  │  REJECTED    │
+  └──────────────┘
+```
+
+**Strengths:**
+- Mature ecosystem
+- Simple to learn
+- Flexible
+
+**Weaknesses:**
+- No native async
+- Manual API docs
+- Lower throughput
+- Manual validation
+
+</td>
+<td>
+
+```
+  ┌──────────────┐
+  │  Django REST  │
+  │              │
+  │  Score: 5/10 │
+  │  ★★★★★☆☆☆☆☆ │
+  │              │
+  │  REJECTED    │
+  └──────────────┘
+```
+
+**Strengths:**
+- Full ORM included
+- Admin interface
+- Large community
+
+**Weaknesses:**
+- Limited async
+- Heaviest framework
+- Lowest throughput
+- Steeper learning curve
+
+</td>
+</tr>
+</table>
+
+### Performance Comparison
 
 ```
   Requests per Second (higher is better)
+  ─────────────────────────────────────────────────────
 
-  FastAPI     ████████████████████████████████████████  ~15,000 req/s
-  Flask       █████████████                             ~5,000  req/s
-  Django REST ████████                                  ~3,000  req/s
-              ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-              0        5k       10k       15k
+  FastAPI     ████████████████████████████████████  ~15,000 req/s
+  Flask       ████████████                          ~5,000  req/s
+  Django REST ████████                              ~3,000  req/s
+
+  ─────────────────────────────────────────────────────
 ```
 
 ---
@@ -123,18 +188,19 @@ ECTP needs a Python web framework for its REST API layer that supports async ope
 
 ### Positive Outcomes
 
-| # | Consequence | Impact |
-|:---:|:---|:---:|
-| 1 | Superior performance (~15k req/s) enabling enterprise-grade throughput | ![HIGH](https://img.shields.io/badge/HIGH-brightgreen?style=flat-square) |
-| 2 | Automatic OpenAPI/Swagger documentation reduces maintenance burden | ![HIGH](https://img.shields.io/badge/HIGH-brightgreen?style=flat-square) |
-| 3 | Native async/await support for I/O-bound operations | ![HIGH](https://img.shields.io/badge/HIGH-brightgreen?style=flat-square) |
-| 4 | Pydantic integration provides robust request/response validation | ![MEDIUM](https://img.shields.io/badge/MEDIUM-green?style=flat-square) |
+| # | Outcome | Impact |
+|:---:|:---|:---|
+| &#9989; | **Superior performance** -- ~15k requests/second provides headroom for enterprise scale | High |
+| &#9989; | **Auto-documentation** -- OpenAPI/Swagger UI generated automatically from code | High |
+| &#9989; | **Native async** -- First-class async/await support for I/O-bound operations | High |
+| &#9989; | **Type safety** -- Pydantic models provide runtime validation and IDE support | Medium |
+| &#9989; | **Developer experience** -- Modern Python patterns reduce boilerplate | Medium |
 
-### Risks & Mitigations
+### Negative Outcomes
 
-| # | Risk | Severity | Mitigation |
-|:---:|:---|:---:|:---|
-| 1 | Smaller ecosystem than Flask/Django | ![LOW](https://img.shields.io/badge/LOW-yellow?style=flat-square) | Rapidly growing community; most Python libraries are compatible |
+| # | Outcome | Mitigation |
+|:---:|:---|:---|
+| &#9888; | **Smaller ecosystem** than Flask/Django | Mitigated by rapidly growing community and compatible ASGI middleware |
 
 ---
 
@@ -143,9 +209,9 @@ ECTP needs a Python web framework for its REST API layer that supports async ope
 | Resource | Link |
 |:---|:---|
 | FastAPI Official Documentation | [https://fastapi.tiangolo.com](https://fastapi.tiangolo.com) |
-| FastAPI GitHub Repository | [https://github.com/tiangolo/fastapi](https://github.com/tiangolo/fastapi) |
 | Pydantic Documentation | [https://docs.pydantic.dev](https://docs.pydantic.dev) |
-| ECTP Architecture Document | [Architecture Document](../architecture/architecture-document.md) |
+| ASGI Specification | [https://asgi.readthedocs.io](https://asgi.readthedocs.io) |
+| TechEmpower Benchmarks | [https://www.techempower.com/benchmarks](https://www.techempower.com/benchmarks) |
 
 ---
 
@@ -153,6 +219,10 @@ ECTP needs a Python web framework for its REST API layer that supports async ope
 
 **Author:** Gopi Krishna Vajrala
 
-*Architecture Decision Record -- ECTP Platform*
+![Status](https://img.shields.io/badge/Status-ACCEPTED-brightgreen?style=flat-square)
+&nbsp;&nbsp;|&nbsp;&nbsp;
+**ADR-001**
+&nbsp;&nbsp;|&nbsp;&nbsp;
+**2026-02-16**
 
 </div>

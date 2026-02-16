@@ -17,10 +17,11 @@
 ║                                                                            ║
 ║   Use Amazon Web Services (AWS) as the primary cloud provider for ECTP.    ║
 ║                                                                            ║
-║   AWS is the market leader with the broadest service catalog, highest      ║
-║   adoption in Higher Education, comprehensive compliance certifications    ║
-║   (FERPA, HIPAA, SOC2, FedRAMP), and the largest partner ecosystem for     ║
-║   Higher Ed integrations.                                                  ║
+║   AWS offers the broadest service catalog, highest adoption in Higher      ║
+║   Education, comprehensive compliance certifications (FERPA, HIPAA,        ║
+║   SOC2, FedRAMP), and the largest partner ecosystem -- making it the       ║
+║   optimal choice for all ECTP infrastructure, compute, storage, and        ║
+║   managed services.                                                        ║
 ║                                                                            ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 ```
@@ -49,19 +50,19 @@
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
 │                                                                          │
-│   ECTP requires a cloud provider that delivers:                          │
+│   ECTP requires a cloud provider for all infrastructure, compute,        │
+│   storage, and managed services.                                         │
 │                                                                          │
-│     * Enterprise-grade infrastructure for compute, storage, and          │
-│       managed services                                                   │
-│     * Compliance certifications for Higher Education (FERPA, HIPAA)      │
-│     * Robust security services and governance tools                      │
-│     * Strong ecosystem of Higher Ed technology partners                  │
-│     * Cost management and optimization capabilities                      │
+│   Key Requirements:                                                      │
+│   ├── Broadest service catalog for enterprise workloads                  │
+│   ├── Strong adoption in Higher Education institutions                   │
+│   ├── Comprehensive compliance certifications                            │
+│   ├── Robust security services and tooling                               │
+│   ├── Mature cost management and optimization tools                      │
+│   └── Large partner ecosystem (Ellucian, ServiceNow, etc.)              │
 │                                                                          │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
-
-ECTP requires a cloud provider for all infrastructure, compute, storage, and managed services.
 
 ---
 
@@ -69,100 +70,168 @@ ECTP requires a cloud provider for all infrastructure, compute, storage, and man
 
 > **We will use Amazon Web Services (AWS) as the primary cloud provider for ECTP.**
 
-```
-╔══════════════════════════════════════════════════════════════════════╗
-║                                                                      ║
-║                  >>> Amazon Web Services (AWS) <<<                    ║
-║                                                                      ║
-║          The world's most comprehensive and broadly adopted           ║
-║          cloud platform, offering over 200 fully featured             ║
-║          services from data centers globally.                         ║
-║                                                                      ║
-╚══════════════════════════════════════════════════════════════════════╝
-```
-
 ---
 
 ## Rationale
 
 ### Key Decision Drivers
 
-| # | Factor | Details | Importance |
-|:---:|:---|:---|:---:|
-| 1 | **Market Leadership** | Broadest service catalog of any cloud provider | ![CRITICAL](https://img.shields.io/badge/CRITICAL-red?style=flat-square) |
-| 2 | **Higher Ed Adoption** | Highest adoption rate among Higher Education institutions | ![CRITICAL](https://img.shields.io/badge/CRITICAL-red?style=flat-square) |
-| 3 | **Compliance** | FERPA, HIPAA, SOC2, FedRAMP compliance certifications | ![CRITICAL](https://img.shields.io/badge/CRITICAL-red?style=flat-square) |
-| 4 | **Partner Ecosystem** | Largest partner ecosystem for Higher Ed (Ellucian, ServiceNow) | ![HIGH](https://img.shields.io/badge/HIGH-brightgreen?style=flat-square) |
-| 5 | **Security Services** | Comprehensive suite: GuardDuty, Security Hub, Inspector | ![HIGH](https://img.shields.io/badge/HIGH-brightgreen?style=flat-square) |
-| 6 | **Cost Management** | Mature tools: Cost Explorer, Budgets, Savings Plans | ![MEDIUM](https://img.shields.io/badge/MEDIUM-green?style=flat-square) |
-| 7 | **Regional Presence** | Strong presence in us-east-1 (closest to many institutions) | ![MEDIUM](https://img.shields.io/badge/MEDIUM-green?style=flat-square) |
-
-### Compliance Certifications
+<table>
+<tr>
+<td width="50%" valign="top">
 
 ```
-  ┌─────────────────────────────────────────────────────────────────────┐
-  │                   AWS Compliance Coverage                           │
-  ├─────────────────────────────────────────────────────────────────────┤
-  │                                                                     │
-  │   ┌──────────┐  ┌──────────┐  ┌──────────┐  ┌──────────────────┐  │
-  │   │  FERPA   │  │  HIPAA   │  │  SOC2    │  │    FedRAMP       │  │
-  │   │          │  │          │  │          │  │                  │  │
-  │   │ Student  │  │ Health   │  │ Security │  │   Federal Gov    │  │
-  │   │ Privacy  │  │ Data     │  │ Controls │  │   Standard       │  │
-  │   └──────────┘  └──────────┘  └──────────┘  └──────────────────┘  │
-  │                                                                     │
-  │           All certifications verified and maintained                │
-  └─────────────────────────────────────────────────────────────────────┘
+┌─────────────────────────────┐
+│   Market Leadership         │
+│                             │
+│   AWS is the market leader  │
+│   with the broadest service │
+│   catalog available.        │
+└─────────────────────────────┘
 ```
 
-### Security Services Ecosystem
+</td>
+<td width="50%" valign="top">
 
 ```
-  AWS Security Services for ECTP
-
-  ┌──────────────────┐   ┌──────────────────┐   ┌──────────────────┐
-  │   GuardDuty      │   │  Security Hub    │   │   Inspector      │
-  │                  │   │                  │   │                  │
-  │  Threat          │   │  Centralized     │   │  Vulnerability   │
-  │  Detection       │   │  Security View   │   │  Assessment      │
-  │  & Monitoring    │   │  & Compliance    │   │  & Scanning      │
-  └──────────────────┘   └──────────────────┘   └──────────────────┘
-           │                      │                      │
-           └──────────────────────┼──────────────────────┘
-                                  │
-                    ┌─────────────▼─────────────┐
-                    │    Unified Security        │
-                    │    Posture Management      │
-                    └───────────────────────────┘
+┌─────────────────────────────┐
+│   Higher Ed Adoption        │
+│                             │
+│   Highest adoption rate     │
+│   among Higher Education    │
+│   institutions nationally.  │
+└─────────────────────────────┘
 ```
 
----
+</td>
+</tr>
+<tr>
+<td width="50%" valign="top">
 
-## Alternatives Considered
+```
+┌─────────────────────────────┐
+│   Compliance & Security     │
+│                             │
+│   FERPA, HIPAA, SOC2, and  │
+│   FedRAMP compliance        │
+│   certifications.           │
+└─────────────────────────────┘
+```
+
+</td>
+<td width="50%" valign="top">
+
+```
+┌─────────────────────────────┐
+│   Partner Ecosystem         │
+│                             │
+│   Largest partner ecosystem │
+│   for Higher Ed: Ellucian,  │
+│   ServiceNow, and more.     │
+└─────────────────────────────┘
+```
+
+</td>
+</tr>
+</table>
+
+### Full Rationale Breakdown
+
+| # | Factor | Details |
+|:---:|:---|:---|
+| 1 | **Market Leadership** | Broadest service catalog among all cloud providers |
+| 2 | **Higher Ed Adoption** | Highest adoption in Higher Education institutions |
+| 3 | **Compliance** | FERPA, HIPAA, SOC2, FedRAMP compliance certifications |
+| 4 | **Partner Ecosystem** | Largest partner ecosystem for Higher Ed (Ellucian, ServiceNow) |
+| 5 | **Security Services** | Comprehensive tooling: GuardDuty, Security Hub, Inspector |
+| 6 | **Cost Management** | Mature tools: Cost Explorer, Budgets, Savings Plans |
+| 7 | **Regional Presence** | Strong presence in us-east-1 (closest to many institutions) |
 
 ### Cloud Provider Comparison
 
-| Criteria | AWS | Azure | GCP |
-|:---|:---:|:---:|:---:|
-| **Service Breadth** | 200+ services | 200+ services | 100+ services |
-| **Higher Ed Adoption** | Highest | Growing | Limited |
-| **FERPA Compliance** | Yes | Yes | Yes |
-| **HIPAA Compliance** | Yes | Yes | Yes |
-| **FedRAMP** | Yes | Yes | Yes |
-| **Higher Ed Partners** | Ellucian, ServiceNow | Limited | Limited |
-| **Cost Management** | Mature | Mature | Good |
-| **us-east-1 Presence** | Strong | Strong | Moderate |
+<table>
+<tr>
+<th width="33%">AWS</th>
+<th width="33%">Azure</th>
+<th width="33%">GCP</th>
+</tr>
+<tr>
+<td>
 
-### Scoring Summary
+```
+┌────────────────┐
+│      AWS       │
+│                │
+│  Score: 9.5/10 │
+│  ★★★★★★★★★★   │
+│                │
+│   SELECTED     │
+└────────────────┘
+```
 
-| Criteria | Weight | AWS | Azure | GCP |
-|:---|:---:|:---:|:---:|:---:|
-| Service Breadth | 20% | ![10/10](https://img.shields.io/badge/10%2F10-brightgreen?style=flat-square) | ![9/10](https://img.shields.io/badge/9%2F10-brightgreen?style=flat-square) | ![7/10](https://img.shields.io/badge/7%2F10-yellowgreen?style=flat-square) |
-| Higher Ed Adoption | 25% | ![10/10](https://img.shields.io/badge/10%2F10-brightgreen?style=flat-square) | ![6/10](https://img.shields.io/badge/6%2F10-yellow?style=flat-square) | ![4/10](https://img.shields.io/badge/4%2F10-orange?style=flat-square) |
-| Compliance | 20% | ![10/10](https://img.shields.io/badge/10%2F10-brightgreen?style=flat-square) | ![9/10](https://img.shields.io/badge/9%2F10-brightgreen?style=flat-square) | ![8/10](https://img.shields.io/badge/8%2F10-green?style=flat-square) |
-| Partner Ecosystem | 20% | ![10/10](https://img.shields.io/badge/10%2F10-brightgreen?style=flat-square) | ![5/10](https://img.shields.io/badge/5%2F10-yellow?style=flat-square) | ![4/10](https://img.shields.io/badge/4%2F10-orange?style=flat-square) |
-| Cost Management | 15% | ![9/10](https://img.shields.io/badge/9%2F10-brightgreen?style=flat-square) | ![9/10](https://img.shields.io/badge/9%2F10-brightgreen?style=flat-square) | ![8/10](https://img.shields.io/badge/8%2F10-green?style=flat-square) |
-| **Weighted Total** | **100%** | **![9.8](https://img.shields.io/badge/9.8%2F10-brightgreen?style=flat-square)** | **![7.3](https://img.shields.io/badge/7.3%2F10-yellowgreen?style=flat-square)** | **![5.9](https://img.shields.io/badge/5.9%2F10-yellow?style=flat-square)** |
+- Market leader
+- Broadest services
+- Best Higher Ed fit
+- Top compliance
+- Best cost tools
+
+</td>
+<td>
+
+```
+┌────────────────┐
+│     Azure      │
+│                │
+│  Score: 7.5/10 │
+│  ★★★★★★★★☆☆   │
+│                │
+│   CONSIDERED   │
+└────────────────┘
+```
+
+- Strong enterprise
+- Good compliance
+- MS integration
+- Growing Higher Ed
+- Complex pricing
+
+</td>
+<td>
+
+```
+┌────────────────┐
+│      GCP       │
+│                │
+│  Score: 6.5/10 │
+│  ★★★★★★★☆☆☆   │
+│                │
+│   CONSIDERED   │
+└────────────────┘
+```
+
+- Best data/ML
+- Strong Kubernetes
+- Simpler pricing
+- Smaller Higher Ed
+- Fewer services
+
+</td>
+</tr>
+</table>
+
+### Compliance Coverage
+
+```
+  Compliance Certifications
+  ─────────────────────────────────────────────────────
+
+  FERPA     ██████████████████████████████████████  AWS: Full Coverage
+  HIPAA     ██████████████████████████████████████  AWS: Full Coverage
+  SOC2      ██████████████████████████████████████  AWS: Full Coverage
+  FedRAMP   ██████████████████████████████████████  AWS: Full Coverage
+
+  ─────────────────────────────────────────────────────
+```
 
 ---
 
@@ -170,20 +239,21 @@ ECTP requires a cloud provider for all infrastructure, compute, storage, and man
 
 ### Positive Outcomes
 
-| # | Consequence | Impact |
-|:---:|:---|:---:|
-| 1 | Broadest service availability enabling any future architecture choice | ![HIGH](https://img.shields.io/badge/HIGH-brightgreen?style=flat-square) |
-| 2 | Full compliance certifications (FERPA, HIPAA, SOC2, FedRAMP) | ![HIGH](https://img.shields.io/badge/HIGH-brightgreen?style=flat-square) |
-| 3 | Highest Higher Ed adoption ensures community support and best practices | ![HIGH](https://img.shields.io/badge/HIGH-brightgreen?style=flat-square) |
-| 4 | Largest partner ecosystem for Ellucian and ServiceNow integrations | ![HIGH](https://img.shields.io/badge/HIGH-brightgreen?style=flat-square) |
-| 5 | Comprehensive security services for enterprise governance | ![MEDIUM](https://img.shields.io/badge/MEDIUM-green?style=flat-square) |
-| 6 | Mature cost management tools for budget governance | ![MEDIUM](https://img.shields.io/badge/MEDIUM-green?style=flat-square) |
+| # | Outcome | Impact |
+|:---:|:---|:---|
+| &#9989; | **Broadest service availability** -- 200+ services covering all ECTP requirements | High |
+| &#9989; | **Compliance certifications** -- Pre-certified for FERPA, HIPAA, SOC2, FedRAMP | High |
+| &#9989; | **Higher Ed adoption** -- Proven track record with similar institutions | High |
+| &#9989; | **Partner ecosystem** -- Direct integrations with Ellucian, ServiceNow | High |
+| &#9989; | **Security tooling** -- GuardDuty, Security Hub, Inspector provide layered security | Medium |
+| &#9989; | **Cost management** -- Cost Explorer, Budgets enable fine-grained cost control | Medium |
+| &#9989; | **Regional proximity** -- us-east-1 provides low latency for many institutions | Medium |
 
-### Risks & Mitigations
+### Negative Outcomes
 
-| # | Risk | Severity | Mitigation |
-|:---:|:---|:---:|:---|
-| 1 | Risk of vendor lock-in with AWS-specific services | ![MEDIUM](https://img.shields.io/badge/MEDIUM-orange?style=flat-square) | Containerization (ECS/EKS) and Terraform abstraction layer ensure portability |
+| # | Outcome | Mitigation |
+|:---:|:---|:---|
+| &#9888; | **Risk of vendor lock-in** to a single cloud provider | Mitigated by containerization (Docker/ECS/EKS) and Terraform abstraction layer enabling future portability |
 
 ---
 
@@ -191,10 +261,10 @@ ECTP requires a cloud provider for all infrastructure, compute, storage, and man
 
 | Resource | Link |
 |:---|:---|
-| AWS Cloud for Higher Education | [https://aws.amazon.com/education/higher-ed/](https://aws.amazon.com/education/higher-ed/) |
-| AWS Compliance Programs | [https://aws.amazon.com/compliance/programs/](https://aws.amazon.com/compliance/programs/) |
-| AWS Security Services | [https://aws.amazon.com/products/security/](https://aws.amazon.com/products/security/) |
-| ECTP Architecture Document | [Architecture Document](../architecture/architecture-document.md) |
+| AWS Official Documentation | [https://docs.aws.amazon.com](https://docs.aws.amazon.com) |
+| AWS Compliance Programs | [https://aws.amazon.com/compliance/programs](https://aws.amazon.com/compliance/programs) |
+| AWS for Education | [https://aws.amazon.com/education](https://aws.amazon.com/education) |
+| AWS Well-Architected Framework | [https://aws.amazon.com/architecture/well-architected](https://aws.amazon.com/architecture/well-architected) |
 
 ---
 
@@ -202,6 +272,10 @@ ECTP requires a cloud provider for all infrastructure, compute, storage, and man
 
 **Author:** Gopi Krishna Vajrala
 
-*Architecture Decision Record -- ECTP Platform*
+![Status](https://img.shields.io/badge/Status-ACCEPTED-brightgreen?style=flat-square)
+&nbsp;&nbsp;|&nbsp;&nbsp;
+**ADR-003**
+&nbsp;&nbsp;|&nbsp;&nbsp;
+**2026-02-16**
 
 </div>

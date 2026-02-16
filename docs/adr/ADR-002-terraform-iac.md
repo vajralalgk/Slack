@@ -15,13 +15,14 @@
 ║                                                                            ║
 ║   DECISION SUMMARY                                                         ║
 ║                                                                            ║
-║   Use Terraform as the primary Infrastructure as Code (IaC) tool for       ║
-║   ECTP.                                                                    ║
+║   Use Terraform as the primary Infrastructure as Code (IaC) tool           ║
+║   for ECTP.                                                                ║
 ║                                                                            ║
-║   Terraform provides multi-cloud support, a mature module ecosystem,       ║
+║   Terraform provides multi-cloud support, mature module ecosystem,         ║
 ║   built-in state management, and the largest community -- making it        ║
-║   the industry-standard choice for repeatable, version-controlled          ║
-║   infrastructure deployment.                                               ║
+║   the industry-standard choice for defining ECTP infrastructure as         ║
+║   code for repeatability, version control, and multi-environment           ║
+║   deployment.                                                              ║
 ║                                                                            ║
 ╚══════════════════════════════════════════════════════════════════════════════╝
 ```
@@ -50,36 +51,24 @@
 ```
 ┌──────────────────────────────────────────────────────────────────────────┐
 │                                                                          │
-│   ECTP infrastructure must be defined as code for:                       │
+│   ECTP infrastructure must be defined as code for repeatability,         │
+│   version control, and multi-environment deployment.                     │
 │                                                                          │
-│     * Repeatability across multiple environments                         │
-│     * Version control and audit trail of infrastructure changes          │
-│     * Multi-environment deployment (Dev, QA, UAT, Prod)                  │
-│     * Collaboration and peer review of infrastructure changes            │
+│   Key Requirements:                                                      │
+│   ├── Infrastructure defined as version-controlled code                  │
+│   ├── Repeatable deployments across multiple environments                │
+│   ├── Multi-cloud capability (future-proofing)                           │
+│   ├── Mature module/reuse system                                         │
+│   └── Strong community and enterprise adoption                           │
 │                                                                          │
 └──────────────────────────────────────────────────────────────────────────┘
 ```
-
-ECTP infrastructure must be defined as code for repeatability, version control, and multi-environment deployment.
 
 ---
 
 ## Decision
 
 > **We will use Terraform as the primary IaC tool for ECTP.**
-
-```
-╔══════════════════════════════════════════════════════════════════════╗
-║                                                                      ║
-║                      >>> Terraform <<<                                ║
-║                                                                      ║
-║          Infrastructure as Code tool that lets you define             ║
-║          cloud and on-prem resources in human-readable               ║
-║          configuration files (HCL) that you can version,             ║
-║          reuse, and share.                                           ║
-║                                                                      ║
-╚══════════════════════════════════════════════════════════════════════╝
-```
 
 ---
 
@@ -95,28 +84,127 @@ ECTP infrastructure must be defined as code for repeatability, version control, 
 | **Community** | Largest | AWS-focused | Growing | Growing |
 | **Language** | HCL | JSON/YAML | Any | TypeScript/Python |
 
-### Detailed Scoring
+### Detailed Evaluation
 
-| Criteria | Weight | Terraform | CloudFormation | Pulumi | CDK |
-|:---|:---:|:---:|:---:|:---:|:---:|
-| Multi-Cloud Support | 25% | ![10/10](https://img.shields.io/badge/10%2F10-brightgreen?style=flat-square) | ![3/10](https://img.shields.io/badge/3%2F10-red?style=flat-square) | ![9/10](https://img.shields.io/badge/9%2F10-brightgreen?style=flat-square) | ![4/10](https://img.shields.io/badge/4%2F10-orange?style=flat-square) |
-| State Management | 20% | ![9/10](https://img.shields.io/badge/9%2F10-brightgreen?style=flat-square) | ![8/10](https://img.shields.io/badge/8%2F10-green?style=flat-square) | ![8/10](https://img.shields.io/badge/8%2F10-green?style=flat-square) | ![8/10](https://img.shields.io/badge/8%2F10-green?style=flat-square) |
-| Module Ecosystem | 20% | ![10/10](https://img.shields.io/badge/10%2F10-brightgreen?style=flat-square) | ![6/10](https://img.shields.io/badge/6%2F10-yellow?style=flat-square) | ![6/10](https://img.shields.io/badge/6%2F10-yellow?style=flat-square) | ![7/10](https://img.shields.io/badge/7%2F10-yellowgreen?style=flat-square) |
-| Community Size | 20% | ![10/10](https://img.shields.io/badge/10%2F10-brightgreen?style=flat-square) | ![7/10](https://img.shields.io/badge/7%2F10-yellowgreen?style=flat-square) | ![5/10](https://img.shields.io/badge/5%2F10-yellow?style=flat-square) | ![6/10](https://img.shields.io/badge/6%2F10-yellow?style=flat-square) |
-| Learning Curve | 15% | ![7/10](https://img.shields.io/badge/7%2F10-yellowgreen?style=flat-square) | ![7/10](https://img.shields.io/badge/7%2F10-yellowgreen?style=flat-square) | ![8/10](https://img.shields.io/badge/8%2F10-green?style=flat-square) | ![8/10](https://img.shields.io/badge/8%2F10-green?style=flat-square) |
-| **Weighted Total** | **100%** | **![9.3](https://img.shields.io/badge/9.3%2F10-brightgreen?style=flat-square)** | **![6.1](https://img.shields.io/badge/6.1%2F10-yellow?style=flat-square)** | **![7.2](https://img.shields.io/badge/7.2%2F10-yellowgreen?style=flat-square)** | **![6.4](https://img.shields.io/badge/6.4%2F10-yellow?style=flat-square)** |
-
-### Community & Ecosystem Visualization
+<table>
+<tr>
+<th width="25%">Terraform</th>
+<th width="25%">CloudFormation</th>
+<th width="25%">Pulumi</th>
+<th width="25%">CDK</th>
+</tr>
+<tr>
+<td>
 
 ```
-  Community Size & Module Ecosystem (higher is better)
+┌────────────┐
+│ Terraform  │
+│            │
+│ Score: 9/10│
+│ ★★★★★★★★★☆│
+│            │
+│ SELECTED   │
+└────────────┘
+```
 
-  Terraform       ████████████████████████████████████████  Industry Leader
-  CloudFormation  ██████████████████████████                AWS-focused
-  Pulumi          ████████████████                          Growing Fast
-  CDK             ██████████████████                        AWS Ecosystem
-                  ┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈┈
-                  Low                              High
+**Strengths:**
+- Multi-cloud
+- Largest community
+- Mature modules
+- Built-in state
+
+**Weaknesses:**
+- HCL learning curve
+- State file mgmt
+
+</td>
+<td>
+
+```
+┌────────────┐
+│ CloudForm. │
+│            │
+│ Score: 6/10│
+│ ★★★★★★☆☆☆☆│
+│            │
+│ REJECTED   │
+└────────────┘
+```
+
+**Strengths:**
+- Native AWS
+- AWS-managed state
+- Deep integration
+
+**Weaknesses:**
+- AWS only
+- Verbose syntax
+- Slow updates
+
+</td>
+<td>
+
+```
+┌────────────┐
+│  Pulumi    │
+│            │
+│ Score: 7/10│
+│ ★★★★★★★☆☆☆│
+│            │
+│ REJECTED   │
+└────────────┘
+```
+
+**Strengths:**
+- Any language
+- Multi-cloud
+- Modern approach
+
+**Weaknesses:**
+- Smaller community
+- Newer tool
+- Less enterprise adoption
+
+</td>
+<td>
+
+```
+┌────────────┐
+│    CDK     │
+│            │
+│ Score: 6/10│
+│ ★★★★★★☆☆☆☆│
+│            │
+│ REJECTED   │
+└────────────┘
+```
+
+**Strengths:**
+- Real languages
+- AWS constructs
+- Type safety
+
+**Weaknesses:**
+- AWS-focused
+- Generates CFN
+- Abstraction layers
+
+</td>
+</tr>
+</table>
+
+### Community & Ecosystem Comparison
+
+```
+  Community Size (relative scale)
+  ─────────────────────────────────────────────────────
+
+  Terraform       ██████████████████████████████████████  Largest
+  CloudFormation  ██████████████████████                  AWS-focused
+  Pulumi          █████████████                           Growing
+  CDK             ██████████████                          Growing
+
+  ─────────────────────────────────────────────────────
 ```
 
 ---
@@ -125,19 +213,20 @@ ECTP infrastructure must be defined as code for repeatability, version control, 
 
 ### Positive Outcomes
 
-| # | Consequence | Impact |
-|:---:|:---|:---:|
-| 1 | Industry-standard tool with broadest adoption and hiring pool | ![HIGH](https://img.shields.io/badge/HIGH-brightgreen?style=flat-square) |
-| 2 | Excellent module ecosystem via Terraform Registry for rapid provisioning | ![HIGH](https://img.shields.io/badge/HIGH-brightgreen?style=flat-square) |
-| 3 | Built-in state management with locking for team collaboration | ![HIGH](https://img.shields.io/badge/HIGH-brightgreen?style=flat-square) |
-| 4 | Multi-cloud portability prevents vendor lock-in | ![MEDIUM](https://img.shields.io/badge/MEDIUM-green?style=flat-square) |
+| # | Outcome | Impact |
+|:---:|:---|:---|
+| &#9989; | **Industry standard** -- Widely adopted across enterprises, ensuring long-term viability | High |
+| &#9989; | **Excellent module ecosystem** -- Terraform Registry provides thousands of reusable modules | High |
+| &#9989; | **State management** -- Built-in state tracking ensures infrastructure drift detection | High |
+| &#9989; | **Multi-cloud support** -- Future-proofs ECTP against potential cloud migration needs | Medium |
+| &#9989; | **Plan/Apply workflow** -- Preview changes before applying, reducing deployment risk | Medium |
 
-### Risks & Mitigations
+### Negative Outcomes
 
-| # | Risk | Severity | Mitigation |
-|:---:|:---|:---:|:---|
-| 1 | HCL learning curve for team members new to Terraform | ![LOW](https://img.shields.io/badge/LOW-yellow?style=flat-square) | Extensive official documentation, tutorials, and internal training |
-| 2 | State file management requires dedicated backend | ![MEDIUM](https://img.shields.io/badge/MEDIUM-orange?style=flat-square) | Use S3 + DynamoDB backend for remote state with locking |
+| # | Outcome | Mitigation |
+|:---:|:---|:---|
+| &#9888; | **HCL learning curve** for team members unfamiliar with the language | Mitigated by extensive documentation, tutorials, and team training sessions |
+| &#9888; | **State file management** requires careful configuration | Mitigated by using S3 + DynamoDB backend for remote state with locking |
 
 ---
 
@@ -148,7 +237,7 @@ ECTP infrastructure must be defined as code for repeatability, version control, 
 | Terraform Official Documentation | [https://developer.hashicorp.com/terraform](https://developer.hashicorp.com/terraform) |
 | Terraform Registry | [https://registry.terraform.io](https://registry.terraform.io) |
 | Terraform AWS Provider | [https://registry.terraform.io/providers/hashicorp/aws](https://registry.terraform.io/providers/hashicorp/aws) |
-| ECTP Architecture Document | [Architecture Document](../architecture/architecture-document.md) |
+| HashiCorp Learn Platform | [https://developer.hashicorp.com/terraform/tutorials](https://developer.hashicorp.com/terraform/tutorials) |
 
 ---
 
@@ -156,6 +245,10 @@ ECTP infrastructure must be defined as code for repeatability, version control, 
 
 **Author:** Gopi Krishna Vajrala
 
-*Architecture Decision Record -- ECTP Platform*
+![Status](https://img.shields.io/badge/Status-ACCEPTED-brightgreen?style=flat-square)
+&nbsp;&nbsp;|&nbsp;&nbsp;
+**ADR-002**
+&nbsp;&nbsp;|&nbsp;&nbsp;
+**2026-02-16**
 
 </div>
