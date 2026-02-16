@@ -1,300 +1,444 @@
-<div align="center">
+# Enterprise Cloud Transformation Platform (ECTP)
+# Administrator Operations Runbook
 
-# ECTP Admin Runbook
-
-```
-╔══════════════════════════════════════════════════════════════════╗
-║                    ECTP ADMIN RUNBOOK                           ║
-║               Enterprise Cloud Transformation Platform          ║
-╚══════════════════════════════════════════════════════════════════╝
-```
-
+**Document ID:** ECTP-RUNBOOK-002
 **Author:** Gopi Krishna Vajrala
-**Version:** 1.0.0
-**Last Updated:** 2026-02-16
-**Classification:** Internal Operations
+**Version:** 2.0.0
+**Date:** 2026-02-16
+**Classification:** Internal - Confidential
+**Status:** Approved
 
-</div>
+---
+
+## Document Control
+
+| Version | Date | Author | Changes |
+|---------|------|--------|---------|
+| 2.0.0 | 2026-02-16 | Gopi Krishna Vajrala | Comprehensive rewrite with full operational procedures |
+| 1.0.0 | 2026-02-16 | Gopi Krishna Vajrala | Initial release |
 
 ---
 
 ## Quick Reference Card
 
-> **Bookmarkable summary of critical information for on-call engineers**
-
-| | Item | Detail |
-|---|---|---|
-| **Health Checks** | All Environments | `https://<env>.ectp.edu/health` |
-| **Dashboards** | CloudWatch | AWS Console > CloudWatch > ECTP Dashboards |
-| **Alerts** | PagerDuty | [PagerDuty ECTP Service] |
-| **Logs** | CloudWatch Logs | Log Group: `/ecs/ectp-<env>` |
-| **Deployments** | CI/CD | GitHub Actions > ECTP Workflows |
-| **Incidents** | ServiceNow | ServiceNow ECTP Queue |
-| **Escalation** | Primary | Gopi Krishna Vajrala (Platform Architect) |
-| **Maintenance** | Standard Window | Sunday 02:00-06:00 UTC |
+| Item | Detail |
+|------|--------|
+| **Health Checks** | `https://<env>.ectp.example.edu/health` |
+| **Dashboards** | AWS Console > CloudWatch > ECTP Dashboards |
+| **Alerts** | PagerDuty > ECTP Service |
+| **Logs** | CloudWatch Log Group: `/ectp/<env>/api` |
+| **Deployments** | GitHub Actions > ECTP Workflows |
+| **Incidents** | ServiceNow > ECTP Queue |
+| **Escalation** | Gopi Krishna Vajrala (Platform Architect) |
+| **Maintenance** | Saturday 02:00-06:00 ET (Production) |
 
 ---
 
-## Severity Classification Badges
+## 1. Daily Operations Checklist
 
-| Severity | Badge | Response Time | Description |
-|----------|-------|---------------|-------------|
-| **P1** | :red_circle: `CRITICAL` | **15 minutes** | Complete outage, data loss risk |
-| **P2** | :orange_circle: `HIGH` | **30 minutes** | Major feature impacted, degraded service |
-| **P3** | :yellow_circle: `MEDIUM` | **4 hours** | Minor feature impacted, workaround exists |
-| **P4** | :white_circle: `LOW` | **Next business day** | Cosmetic, minor inconvenience |
-
----
-
-## Daily Operations Checklist
-
-> Complete these checks every morning between **08:00 - 09:00 local time**
-
-| | # | Task | Tool/Location | Expected State |
-|---|---|---|---|---|
-| :ballot_box_with_check: | 1 | Check CloudWatch dashboard for anomalies | AWS CloudWatch > ECTP Dashboards | All metrics green |
-| :ballot_box_with_check: | 2 | Review overnight alerts (SNS/PagerDuty) | PagerDuty > ECTP Service | No unacknowledged alerts |
-| :ballot_box_with_check: | 3 | Verify all health check endpoints (dev/qa/uat/prod) | `curl https://<env>.ectp.edu/health` | HTTP 200 on all |
-| :ballot_box_with_check: | 4 | Check cost dashboard for unexpected spikes | AWS Cost Explorer > ECTP | Within budget threshold |
-| :ballot_box_with_check: | 5 | Review failed CI/CD pipeline runs | GitHub Actions > ECTP | No failures |
-| :ballot_box_with_check: | 6 | Check ServiceNow integration queue depth | ServiceNow > ECTP Queue | Queue depth < 100 |
-| :ballot_box_with_check: | 7 | Verify Ellucian data sync completed | CloudWatch > Ellucian Sync | Last sync < 24h ago |
-
----
-
-## Incident Response
-
-### :red_circle: P1 - Critical (Response: 15 minutes)
-
-> **IMMEDIATE ACTION REQUIRED** - Complete production outage or data integrity risk
-
-<details>
-<summary><strong>:red_circle: P1 Response Procedure - Click to expand</strong></summary>
-
-```
-P1 INCIDENT RESPONSE TIMELINE
-══════════════════════════════════════════════════════════════
- 0 min          5 min          15 min         30 min        60 min
-  │              │               │              │             │
-  ▼              ▼               ▼              ▼             ▼
- ACK           JOIN           IDENTIFY       FIX/          POST-
- ALERT         BRIDGE         SERVICE        ROLLBACK      INCIDENT
-               CALL                                        REPORT
-══════════════════════════════════════════════════════════════
-```
-
-| Step | Action | Details |
-|------|--------|---------|
-| **Step 1** | **Acknowledge alert in PagerDuty** | Open PagerDuty, acknowledge the alert to stop escalation timer |
-| **Step 2** | **Join incident bridge call** | Dial into the incident bridge; link is in the PagerDuty alert |
-| **Step 3** | **Identify affected service via CloudWatch** | Check ECTP dashboards: error rates, latency, CPU/memory |
-| **Step 4** | **Check recent deployments (rollback if suspected)** | Review last deployment; run rollback if deployed within 2 hours |
-| **Step 5** | **Investigate logs with correlation ID** | Use CloudWatch Logs Insights with the `correlation_id` |
-| **Step 6** | **Apply fix or rollback** | Deploy hotfix or run `rollback.sh <environment>` |
-| **Step 7** | **Verify recovery via health checks** | Confirm all health endpoints return 200 |
-| **Step 8** | **Create post-incident report** | Document timeline, root cause, remediation in Confluence |
-
-</details>
-
----
-
-### :orange_circle: P2 - High (Response: 30 minutes)
-
-> **URGENT** - Major feature degraded, significant user impact
-
-<details>
-<summary><strong>:orange_circle: P2 Response Procedure - Click to expand</strong></summary>
-
-| Step | Action | Details |
-|------|--------|---------|
-| **Step 1** | **Acknowledge alert** | Acknowledge in PagerDuty within 30 minutes |
-| **Step 2** | **Investigate root cause** | Review CloudWatch metrics, logs, and recent changes |
-| **Step 3** | **Apply fix or workaround** | Implement fix or document workaround for affected users |
-| **Step 4** | **Update ServiceNow incident** | Log all actions and timeline in ServiceNow ticket |
-| **Step 5** | **Schedule post-mortem if needed** | If systemic issue, schedule team post-mortem within 5 days |
-
-</details>
-
----
-
-## Scaling Operations
-
-### Manual Scale-Up
-
-<details>
-<summary><strong>ECS Service Scaling Procedure</strong></summary>
-
-> Use this when auto-scaling cannot keep pace or during anticipated traffic spikes
+### 1.1 Morning Health Check (08:00 AM ET)
 
 ```bash
-# Scale ECS service to 8 tasks
-aws ecs update-service \
-  --cluster ectp-prod \
-  --service ectp-api-prod \
-  --desired-count 8
+# ------------------------------------------------------------------
+# ECTP Daily Morning Health Check
+# Author: Gopi Krishna Vajrala
+# ------------------------------------------------------------------
+
+ENVIRONMENT="production"
+BASE_URL="https://api.ectp.example.edu"
+CLUSTER="ectp-prod-cluster"
+
+echo "ECTP Daily Health Check - $(date)"
+
+# 1. API Health
+echo -n "[1/10] API Health: "
+curl -s ${BASE_URL}/health | jq -r '.status'
+
+# 2. API Readiness
+echo -n "[2/10] Readiness: "
+curl -s ${BASE_URL}/health/ready | jq -r '.status'
+
+# 3. ECS Service Status
+echo "[3/10] ECS Tasks:"
+aws ecs describe-services --cluster ${CLUSTER} \
+  --services ectp-api-production \
+  --query 'services[0].{desired:desiredCount,running:runningCount}' --output table
+
+# 4. RDS Status
+echo -n "[4/10] RDS: "
+aws rds describe-db-instances --db-instance-identifier ectp-prod-db \
+  --query 'DBInstances[0].DBInstanceStatus' --output text
+
+# 5. ElastiCache Status
+echo -n "[5/10] Redis: "
+aws elasticache describe-cache-clusters --cache-cluster-id ectp-prod-cache \
+  --query 'CacheClusters[0].CacheClusterStatus' --output text
+
+# 6. CloudWatch Alarms in ALARM state
+echo "[6/10] Active Alarms:"
+aws cloudwatch describe-alarms --state-value ALARM \
+  --query 'MetricAlarms[?starts_with(AlarmName,`ectp`)].AlarmName' --output table
+
+# 7. Error Count (last 24h)
+echo -n "[7/10] Errors (24h): "
+aws logs filter-log-events --log-group-name "/ectp/production/api" \
+  --start-time $(date -u -d '24 hours ago' +%s)000 \
+  --filter-pattern "ERROR" --query 'events | length(@)' --output text
+
+# 8. SSL Certificate
+echo "[8/10] SSL Certificate:"
+aws acm describe-certificate --certificate-arn $CERT_ARN \
+  --query 'Certificate.{Status:Status,Expiry:NotAfter}' --output table
+
+# 9. Cost Today
+echo "[9/10] Today's Cost:"
+aws ce get-cost-and-usage \
+  --time-period Start=$(date +%Y-%m-%d),End=$(date -d tomorrow +%Y-%m-%d) \
+  --granularity DAILY --metrics BlendedCost \
+  --query 'ResultsByTime[0].Total.BlendedCost' --output table
+
+# 10. GuardDuty (High/Critical)
+echo -n "[10/10] GuardDuty High Findings: "
+aws guardduty list-findings --detector-id $DETECTOR_ID \
+  --finding-criteria '{"Criterion":{"severity":{"Gte":7}}}' \
+  --query 'FindingIds | length(@)' --output text
 ```
 
-**Verification:**
-```bash
-# Confirm task count
-aws ecs describe-services \
-  --cluster ectp-prod \
-  --services ectp-api-prod \
-  --query 'services[0].runningCount'
-```
+### 1.2 Daily Task Schedule
 
-</details>
+| Time | Task | Responsible |
+|------|------|-------------|
+| 08:00 | Run morning health check script | On-call SRE |
+| 08:15 | Review CloudWatch dashboards for anomalies | On-call SRE |
+| 08:30 | Review overnight deployment results | DevOps Engineer |
+| 09:00 | Check ServiceNow queue for new incidents | Cloud Operations |
+| 10:00 | Review cost anomaly alerts | FinOps Analyst |
+| 12:00 | Midday health verification | On-call SRE |
+| 15:00 | Review security scan results | Security Engineer |
+| 17:00 | End-of-day status report | On-call SRE |
 
-### Database Scaling
+### 1.3 Weekly and Monthly Tasks
 
-<details>
-<summary><strong>RDS Scaling Options</strong></summary>
+**Weekly:**
+- Monday: Capacity metrics review and scaling plan
+- Tuesday: Security vulnerability review
+- Wednesday: Cost optimization review
+- Thursday: Backup verification and restore test
+- Friday: Weekly operations report and retrospective
 
-| Method | Description | Downtime | Requires |
-|--------|-------------|----------|----------|
-| **Vertical** | Modify RDS instance class | Yes (maintenance window) | Change Board approval |
-| **Read Replicas** | Add via Terraform for read-heavy periods | No | Team Lead approval |
-
-</details>
+**Monthly:**
+- Access review and IAM recertification (by 15th)
+- DR failover test on non-production (by 20th)
+- Capacity planning review (by 25th)
+- Cost governance report to leadership (last business day)
+- SSL/TLS certificate renewal review (by 5th)
+- Patch management review (by 10th)
 
 ---
 
-## Backup & Restore
+## 2. Incident Response Procedures
 
-### RDS Automated Backups
+### 2.1 Severity Definitions
 
-| Parameter | Value |
-|-----------|-------|
-| **Retention** | 35 days |
-| **Frequency** | Daily |
-| **Cross-Region** | Enabled to us-west-2 |
+| Severity | Definition | Response | Escalation | Communication |
+|----------|-----------|----------|------------|---------------|
+| **P1 Critical** | Full outage, data breach, compliance violation | 15 min | 30 min to IT Director | Bridge call |
+| **P2 High** | Major feature unavailable, >50% performance degradation | 30 min | 2 hours | Slack + email |
+| **P3 Medium** | Minor feature impacted, workaround available | 4 hours | 24 hours | Slack |
+| **P4 Low** | Cosmetic issue, minor inconvenience | Next biz day | 5 biz days | Ticket update |
 
-### Manual Backup
+### 2.2 P1 Critical Incident Procedure
 
-<details>
-<summary><strong>Create Manual RDS Snapshot</strong></summary>
-
-```bash
-# Create a manual snapshot with date stamp
-aws rds create-db-snapshot \
-  --db-instance-identifier ectp-prod \
-  --db-snapshot-identifier ectp-manual-$(date +%Y%m%d)
+```
+TIMELINE:
+  0-5 min   --> Acknowledge alert, join bridge call, assign IC
+  5-15 min  --> Assess impact, check recent deployments
+  15-30 min --> Investigate logs/metrics, identify root cause
+  30-45 min --> Apply fix or rollback
+  45-60 min --> Verify recovery, stakeholder notification
+  +48 hours --> Blameless post-mortem
 ```
 
-</details>
+| Step | Action | Target |
+|------|--------|--------|
+| 1 | Acknowledge alert in PagerDuty | 0-5 min |
+| 2 | Join incident bridge call | 5 min |
+| 3 | Assign Incident Commander (IC) | 5 min |
+| 4 | Assess scope via health checks | 5-10 min |
+| 5 | Check for recent deployments | 10-15 min |
+| 6 | If deployment suspected: IMMEDIATE ROLLBACK | 15 min |
+| 7 | Investigate logs and CloudWatch metrics | 15-30 min |
+| 8 | Apply fix or workaround | 30-45 min |
+| 9 | Verify recovery via all health endpoints | 45-50 min |
+| 10 | Send resolution notification | 50-60 min |
+| 11 | Schedule blameless post-mortem | Within 48h |
 
-### Restore from Backup
+### 2.3 Communication Templates
 
-<details>
-<summary><strong>Restore RDS from Snapshot</strong></summary>
+**P1 Initial:**
+```
+Subject: [P1 INCIDENT] ECTP - <Brief Description>
+Impact: <User impact description>
+Status: Investigating
+IC: <Name>
+Bridge: <Call details>
+Next Update: 15 minutes
+```
 
-> :warning: **WARNING:** Restoring creates a NEW instance. You must update DNS/connection strings afterward.
+**P1 Resolution:**
+```
+Subject: [P1 RESOLVED] ECTP - <Brief Description>
+Resolution: <What was done>
+Root Cause: <Preliminary cause>
+Duration: <Start> to <End>
+Post-Mortem: Scheduled <Date>
+```
+
+---
+
+## 3. Scaling Operations
+
+### 3.1 Horizontal Scaling (ECS)
 
 ```bash
-# Restore from a specific snapshot
+# Scale to desired count
+aws ecs update-service --cluster ectp-prod-cluster \
+  --service ectp-api-production --desired-count 6
+
+# Wait for stability
+aws ecs wait services-stable --cluster ectp-prod-cluster \
+  --services ectp-api-production
+
+# Verify
+aws ecs describe-services --cluster ectp-prod-cluster \
+  --services ectp-api-production \
+  --query 'services[0].{desired:desiredCount,running:runningCount}' --output table
+```
+
+### 3.2 Vertical Scaling (RDS)
+
+```bash
+# Change instance class (may cause brief Multi-AZ failover)
+aws rds modify-db-instance \
+  --db-instance-identifier ectp-prod-db \
+  --db-instance-class db.r6g.2xlarge \
+  --apply-immediately
+```
+
+### 3.3 Auto-Scaling Thresholds
+
+| Resource | Scale Up | Scale Down | Min | Max |
+|----------|----------|------------|-----|-----|
+| ECS Tasks (CPU) | >70% for 2 min | <30% for 10 min | 3 | 12 |
+| ECS Tasks (Memory) | >80% for 2 min | <40% for 10 min | 3 | 12 |
+
+### 3.4 Pre-Event Scaling Checklist
+
+For enrollment, registration, or other high-traffic events:
+
+- [ ] Scale ECS to 2x desired count 24 hours before
+- [ ] Verify RDS instance class and connection pool
+- [ ] Increase ElastiCache node type if needed
+- [ ] Pre-warm ALB with gradual traffic ramp
+- [ ] Verify auto-scaling policies are active
+- [ ] Notify operations team of expected patterns
+- [ ] Prepare rollback plan
+
+---
+
+## 4. Backup and Restore Procedures
+
+### 4.1 Backup Schedule
+
+| Resource | Type | Frequency | Retention |
+|----------|------|-----------|-----------|
+| RDS PostgreSQL | Automated snapshot | Daily 2:00 AM ET | 35 days (prod) / 7 days (non-prod) |
+| RDS PostgreSQL | Pre-deployment snapshot | Before each deploy | 90 days |
+| RDS PostgreSQL | Cross-region copy | Daily | 14 days (us-west-2) |
+| S3 Buckets | Cross-region replication | Continuous | Indefinite |
+| Terraform State | S3 versioning | Every apply | 90 days |
+
+### 4.2 Monthly Backup Verification
+
+```bash
+# 1. List recent snapshots
+aws rds describe-db-snapshots --db-instance-identifier ectp-prod-db \
+  --query 'DBSnapshots[-5:].{ID:DBSnapshotIdentifier,Created:SnapshotCreateTime}' --output table
+
+# 2. Restore to temporary instance
+SNAPSHOT=$(aws rds describe-db-snapshots --db-instance-identifier ectp-prod-db \
+  --query 'DBSnapshots[-1].DBSnapshotIdentifier' --output text)
+
 aws rds restore-db-instance-from-db-snapshot \
-  --db-instance-identifier ectp-restored \
-  --db-snapshot-identifier ectp-manual-20260216
+  --db-instance-identifier ectp-backup-test-$(date +%Y%m%d) \
+  --db-snapshot-identifier ${SNAPSHOT} --db-instance-class db.t3.medium --no-multi-az
+
+# 3. Wait, verify data, then clean up
+aws rds wait db-instance-available --db-instance-identifier ectp-backup-test-$(date +%Y%m%d)
+# Run verification queries...
+aws rds delete-db-instance --db-instance-identifier ectp-backup-test-$(date +%Y%m%d) --skip-final-snapshot
 ```
 
-</details>
+### 4.3 Restore Procedures
 
----
-
-## Common Troubleshooting
-
-| | Symptom | Possible Cause | Resolution | Severity |
-|---|---|---|---|---|
-| :red_circle: | **502 errors** | ECS tasks crashing | Check task logs, increase memory allocation | P1 |
-| :orange_circle: | **High DB CPU** | Slow queries | Analyze Performance Insights, optimize queries | P2 |
-| :orange_circle: | **ServiceNow timeout** | Network or auth issue | Check VPN connectivity, refresh OAuth token | P2 |
-| :yellow_circle: | **Cost spike** | Runaway auto-scaling | Check scaling policies, set max limits | P3 |
-| :yellow_circle: | **Failed deploys** | Test failures | Check CI/CD logs, fix failing tests | P3 |
-
-<details>
-<summary><strong>Detailed Troubleshooting Steps</strong></summary>
-
-#### 502 Errors
+**Point-in-Time Recovery:**
 ```bash
-# Check ECS task status
-aws ecs list-tasks --cluster ectp-prod --service-name ectp-api-prod
-
-# View stopped task reasons
-aws ecs describe-tasks --cluster ectp-prod --tasks <task-arn> \
-  --query 'tasks[0].stoppedReason'
-
-# Check CloudWatch logs
-aws logs tail /ecs/ectp-prod --since 30m --filter-pattern "ERROR"
+aws rds restore-db-instance-to-point-in-time \
+  --source-db-instance-identifier ectp-prod-db \
+  --target-db-instance-identifier ectp-prod-db-restored \
+  --restore-time "2026-02-16T10:30:00Z" --db-instance-class db.r6g.xlarge --multi-az
 ```
 
-#### High DB CPU
+**Snapshot Restore:**
 ```bash
-# Check active connections
-aws rds describe-db-instances \
-  --db-instance-identifier ectp-prod \
-  --query 'DBInstances[0].DBInstanceStatus'
-```
+aws rds restore-db-instance-from-db-snapshot \
+  --db-instance-identifier ectp-prod-db-restored \
+  --db-snapshot-identifier ectp-pre-deploy-20260216 --db-instance-class db.r6g.xlarge --multi-az
 
-</details>
+# Update connection string
+aws ssm put-parameter --name "/ectp/production/rds-endpoint" \
+  --value "$(aws rds describe-db-instances --db-instance-identifier ectp-prod-db-restored \
+    --query 'DBInstances[0].Endpoint.Address' --output text)" \
+  --type SecureString --overwrite
+```
 
 ---
 
-## Maintenance Windows
+## 5. Monitoring Guide
 
-| Type | Window | Notice Required | Approval |
-|------|--------|-----------------|----------|
-| **Standard** | Sunday 02:00-06:00 UTC | 48 hours before | Team Lead |
-| **Emergency** | Any time | 2 hour notice | IT Director |
+### 5.1 Key Dashboards
+
+| Dashboard | Purpose | Audience |
+|-----------|---------|----------|
+| ECTP-Overview | High-level platform health | All ops team |
+| ECTP-API-Performance | Latency, throughput, errors | Developers + SRE |
+| ECTP-Infrastructure | ECS, RDS, ElastiCache metrics | SRE team |
+| ECTP-Cost | Real-time cost tracking | FinOps + leadership |
+| ECTP-Security | GuardDuty, WAF, access patterns | Security team |
+
+### 5.2 Alerting and Thresholds
+
+| Metric | Warning | Critical | Action |
+|--------|---------|----------|--------|
+| API p99 Latency | >500ms | >1000ms | Scale out / optimize |
+| API 5xx Rate | >1% | >5% | Investigate / rollback |
+| ECS CPU | >70% | >85% | Auto-scale |
+| RDS CPU | >70% | >85% | Scale / optimize queries |
+| RDS Free Storage | <20% | <10% | Increase storage |
+| Redis Memory | >75% | >90% | Scale / eviction review |
+
+### 5.3 Alert Routing
+
+```
+P1 Critical --> PagerDuty phone call --> On-call SRE
+              + Slack #ectp-incidents
+              + Email to IT Director
+
+P2 High     --> PagerDuty push notification --> On-call SRE
+              + Slack #ectp-ops
+
+P3 Medium   --> Slack #ectp-ops
+              + ServiceNow auto-ticket
+
+P4 Low      --> Slack #ectp-monitoring
+```
+
+### 5.4 Log Analysis
+
+```bash
+# Search errors (last hour)
+aws logs filter-log-events --log-group-name "/ectp/production/api" \
+  --start-time $(date -u -d '1 hour ago' +%s)000 --filter-pattern "ERROR" --limit 50
+
+# Search by correlation ID
+aws logs filter-log-events --log-group-name "/ectp/production/api" \
+  --filter-pattern '{ $.correlation_id = "CORRELATION_ID" }'
+
+# Search by user
+aws logs filter-log-events --log-group-name "/ectp/production/api" \
+  --filter-pattern '{ $.user_id = "USR-123" }' --start-time $(date -u -d '24 hours ago' +%s)000
+```
 
 ---
 
-## Emergency Contacts
+## 6. Common Troubleshooting Scenarios
 
-```
-ESCALATION PATH
-════════════════════════════════════════════════════════════
-                    ┌──────────────────┐
-                    │  Security Team   │ ◄── Security Incidents
-                    │  _______________  │
-                    └────────┬─────────┘
-                             │
-                    ┌────────▼─────────┐
-                    │   IT Director    │ ◄── Escalation (P1/P2)
-                    │  _______________  │
-                    └────────┬─────────┘
-                             │
-                    ┌────────▼─────────┐
-                    │ Cloud Operations │ ◄── 24/7 On-Call Rotation
-                    │  On-call rotation │
-                    └────────┬─────────┘
-                             │
-                    ┌────────▼─────────┐
-                    │    Platform      │ ◄── PRIMARY CONTACT
-                    │    Architect     │
-                    │ Gopi Krishna     │
-                    │ Vajrala          │
-                    └──────────────────┘
-════════════════════════════════════════════════════════════
-```
-
-| Priority | Role | Contact | Availability |
-|----------|------|---------|-------------|
-| :red_circle: **Primary** | Platform Architect | Gopi Krishna Vajrala | Business hours + on-call |
-| :orange_circle: **24/7** | Cloud Operations | On-call rotation | 24/7 |
-| :yellow_circle: **Escalation** | IT Director | _______________ | Business hours |
-| :white_circle: **Security** | Security Team | _______________ | Security incidents only |
+| Symptom | Likely Cause | Resolution |
+|---------|-------------|------------|
+| 502 Bad Gateway | All ECS tasks unhealthy | Check stopped task reasons, force new deployment |
+| DB connection exhaustion | Long-running queries, leak | Kill long queries, increase pool size |
+| Redis cache miss spike | Key eviction, insufficient memory | Increase TTL, scale up node |
+| High API latency | Slow queries, cold starts | RDS Performance Insights, scale out |
+| ServiceNow 401 | OAuth token expired | Rotate credentials in Secrets Manager |
+| Terraform state lock | Concurrent run or crash | `terraform force-unlock LOCK_ID` |
+| Cost spike | Runaway auto-scaling | Review scaling policies, set max limits |
+| SSL certificate expiring | Auto-renewal failed | Manual renewal via ACM |
 
 ---
 
-<div align="center">
+## 7. Maintenance Windows
 
-```
-══════════════════════════════════════════════════════════════
-                    END OF ADMIN RUNBOOK
-              Enterprise Cloud Transformation Platform
-══════════════════════════════════════════════════════════════
-```
+| Window | Time (ET) | Frequency | Activities |
+|--------|-----------|-----------|------------|
+| QA Deploy | Mon-Fri 2:00-4:00 AM | Daily | Auto-deploy from release branch |
+| UAT Deploy | Tuesday 6:00-8:00 AM | Weekly | Manual deploy for acceptance |
+| Prod Deploy | Saturday 2:00-6:00 AM | Bi-weekly | Approved production releases |
+| RDS Maintenance | Sunday 4:00-5:00 AM | As needed | AWS patches |
+| Security Patching | 3rd Saturday 2:00-6:00 AM | Monthly | OS and dependency patches |
 
-**Author:** Gopi Krishna Vajrala
+**Production Maintenance Checklist:**
+- [ ] ServiceNow change ticket approved
+- [ ] Stakeholder notification sent (48h notice)
+- [ ] Rollback plan documented
+- [ ] Pre-deployment RDS snapshot created
+- [ ] All tests passing on UAT
+- [ ] Execute deployment
+- [ ] Run post-deployment validation
+- [ ] Monitor 30 minutes post-deploy
+- [ ] Send completion notification
 
-</div>
+**Emergency Maintenance:**
+- IT Director approval required (verbal, followed by written)
+- ServiceNow emergency change ticket within 24 hours
+- Post-change review at next Governance Board meeting
+
+---
+
+## 8. Emergency Contacts
+
+### 8.1 Escalation Matrix
+
+| Level | Contact | Role | Method | Response |
+|-------|---------|------|--------|----------|
+| L1 | On-Call SRE | First responder | PagerDuty | 15 min |
+| L2 | Gopi Krishna Vajrala | Platform Architect | Phone/Slack | 30 min |
+| L3 | IT Director | Department Head | Phone/Email | 1 hour |
+| L4 | CIO | Executive Sponsor | Phone | 2 hours (P1 only) |
+
+### 8.2 Vendor Support
+
+| Vendor | Level | SLA |
+|--------|-------|-----|
+| AWS | Enterprise Support | 15 min (Critical) |
+| ServiceNow | Premium Support | 1 hour (P1) |
+| Ellucian | Standard Support | 4 hours (P1) |
+
+### 8.3 On-Call Rotation
+
+| Week | Primary | Secondary |
+|------|---------|-----------|
+| Odd weeks | SRE Engineer A | SRE Engineer B |
+| Even weeks | SRE Engineer B | SRE Engineer A |
+
+**On-Call Expectations:**
+- Acknowledge P1/P2 alerts within 15 minutes
+- Laptop and VPN access available at all times
+- Escalate to L2 if unresolved within 30 minutes
+- Document all actions during on-call shifts
+- Handoff notes at rotation change
+
+---
+
+**Document Author:** Gopi Krishna Vajrala
+**Review Status:** Approved
+**Next Review Date:** 2026-08-16
