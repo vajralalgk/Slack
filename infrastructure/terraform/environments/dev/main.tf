@@ -2,280 +2,295 @@
 # Enterprise Cloud Transformation Platform (ECTP) - Dev Environment
 # =============================================================================
 # Author: Gopi Krishna Vajrala
-# Purpose: Root Terraform configuration for the ECTP development environment.
-#          Orchestrates all infrastructure modules (networking, security,
-#          compute, database, monitoring) to create a complete, functional
-#          development environment.
+# Description: Root configuration for the ECTP development environment.
+#              Calls all infrastructure modules (networking, security, compute,
+#              database, monitoring) with dev-specific values optimized for
+#              cost savings, fast iteration, and developer experience.
 #
-# Architecture:
-#   This file is the "composition root" that wires together all modules.
-#   Each module is responsible for a specific infrastructure domain, and
-#   this file passes outputs between modules to create the full stack.
-#
-# Module Dependency Graph:
-#   security  --> networking (security needs VPC ID)
-#   compute   --> networking (needs subnets), security (needs SG, IAM roles)
-#   database  --> networking (needs subnets), security (needs SG, KMS, IAM)
-#   monitoring --> compute (needs ECS cluster/service), database (needs RDS ID)
-#
-# Dev Environment Characteristics:
-#   - Smaller instance sizes (cost optimization)
-#   - Fewer AZs (2 instead of 3)
-#   - Shorter log/backup retention
-#   - Deletion protection disabled (for easy tear-down)
-#   - Debug-level logging enabled
+# Environment Characteristics:
+#   - Cost-optimized: Smaller instances, fewer AZs, shorter log retention
+#   - Fast iteration: Deletion protection disabled for easy teardown
+#   - Full stack: All modules deployed for integration testing
+#   - Dev-specific: Lower alarm thresholds, relaxed security policies
 #
 # Usage:
-#   cd infrastructure/terraform/environments/dev
-#   terraform init
-#   terraform plan -var-file="terraform.tfvars"
-#   terraform apply -var-file="terraform.tfvars"
+#   1. Copy terraform.tfvars.example to terraform.tfvars
+#   2. Fill in the required values (AWS region, account, container image)
+#   3. Run: terraform init
+#   4. Run: terraform plan
+#   5. Run: terraform apply
 #
-# SECURITY NOTE:
-#   - Never commit terraform.tfvars with real values to git
-#   - Use terraform.tfvars.example as a template
-#   - Store sensitive values in environment variables or Vault
+# State Management:
+#   - State is stored in S3 with DynamoDB locking for team collaboration
+#   - State file is encrypted at rest using AES-256
+#   - DynamoDB table prevents concurrent modifications
 # =============================================================================
 
-# =============================================================================
-# TERRAFORM CONFIGURATION
-# =============================================================================
-# Defines the Terraform version, required providers, and backend configuration
-# for storing Terraform state remotely.
-# =============================================================================
+# -----------------------------------------------------------------------------
+# Terraform Configuration Block
+# -----------------------------------------------------------------------------
+# Configures the Terraform backend for remote state storage and provider versions.
+# Remote state in S3 with DynamoDB locking enables team collaboration.
+# -----------------------------------------------------------------------------
 terraform {
-  # Require Terraform 1.5+ for module features and improved validation.
-  # WHY: Older versions may have known vulnerabilities or lack features
-  #       (moved blocks, check blocks) used in these modules.
+  # Require Terraform 1.5+ for modern features and security improvements
   required_version = ">= 1.5.0"
 
-  # Required providers with version constraints.
-  # WHY: Version pinning ensures reproducible builds across team members
-  #       and CI/CD pipelines. Prevents supply-chain attacks.
-  required_providers {
-    # AWS provider for all cloud infrastructure.
-    aws = {
-      source  = "hashicorp/aws"    # Official HashiCorp AWS provider
-      version = "~> 5.0"           # Allow 5.x patches, block 6.0+
-    }
-    # Random provider for generating secure passwords.
-    random = {
-      source  = "hashicorp/random" # Official HashiCorp random provider
-      version = "~> 3.0"           # Stable version
-    }
+  # Configure the S3 backend for remote state storage
+  # WHY: Remote state enables:
+  #      1. Team collaboration (multiple engineers can run terraform)
+  #      2. State locking (prevents concurrent modifications)
+  #      3. State encryption (protects sensitive data in the state file)
+  #      4. State versioning (rollback capability via S3 versioning)
+  backend "s3" {
+    # S3 bucket for storing the Terraform state file
+    # WHY: S3 provides durable, versioned storage for the state file
+    # SECURITY: Bucket should have versioning, encryption, and access logging enabled
+    bucket = "ectp-terraform-state-dev"
+
+    # State file path within the S3 bucket
+    # WHY: Organizing state files by environment prevents accidental
+    #      cross-environment modifications
+    key = "dev/terraform.tfstate"
+
+    # AWS region for the S3 bucket and DynamoDB table
+    # WHY: State storage should be in the same region as the infrastructure
+    #      for lowest latency and data residency compliance
+    region = "us-east-1"
+
+    # Enable server-side encryption for the state file at rest
+    # WHY: The Terraform state file contains sensitive data including
+    #      resource IDs, endpoint URLs, and potentially secret values
+    # SECURITY: AES-256 encryption via S3-managed keys (SSE-S3)
+    encrypt = true
+
+    # DynamoDB table for state locking and consistency checking
+    # WHY: Prevents two engineers from running terraform apply simultaneously,
+    #      which could corrupt the state file or create conflicting resources
+    # SECURITY: The lock record contains the user identity for audit purposes
+    dynamodb_table = "ectp-terraform-locks-dev"
+
+    # Use path-style access for compatibility
+    # WHY: Some organizations require path-style S3 access for VPC endpoints
+    # NOTE: This is deprecated by AWS but still used in some environments
+    # use_path_style = true
   }
 
-  # Remote state backend configuration (S3 + DynamoDB).
-  # WHAT: Stores Terraform state in S3 with DynamoDB locking to prevent
-  #       concurrent modifications by multiple team members.
-  # WHY: Local state files are:
-  #       1. Not shareable between team members
-  #       2. Not encrypted by default (state contains secrets!)
-  #       3. Not protected against concurrent modifications
-  #       4. Not backed up automatically
-  # SECURITY: S3 state is encrypted with the specified KMS key.
-  #           DynamoDB locking prevents state corruption from concurrent runs.
-  # NOTE: The S3 bucket, DynamoDB table, and KMS key must exist before
-  #        running `terraform init`. Create them manually or with a bootstrap script.
-  # UNCOMMENT the backend block below after creating the prerequisite resources.
-  #
-  # backend "s3" {
-  #   bucket         = "ectp-terraform-state-dev"           # S3 bucket for state storage
-  #   key            = "dev/terraform.tfstate"               # State file path within the bucket
-  #   region         = "us-east-1"                           # S3 bucket region
-  #   dynamodb_table = "ectp-terraform-lock-dev"             # DynamoDB table for state locking
-  #   encrypt        = true                                  # Encrypt state at rest in S3
-  #   # kms_key_id   = "arn:aws:kms:us-east-1:ACCOUNT:key/KEY-ID"  # KMS key for encryption
-  # }
+  # Define required provider versions
+  required_providers {
+    # AWS provider for all infrastructure resources
+    aws = {
+      # Use the official HashiCorp AWS provider
+      source = "hashicorp/aws"
+      # Pin to version 5.x for stability
+      version = "~> 5.0"
+    }
+    # Random provider for password generation in the security module
+    random = {
+      # Use the official HashiCorp random provider
+      source = "hashicorp/random"
+      # Pin to version 3.x
+      version = "~> 3.0"
+    }
+  }
 }
 
-# =============================================================================
-# AWS PROVIDER CONFIGURATION
-# =============================================================================
-# WHAT: Configures the AWS provider with the target region and default tags.
-# WHY: All resources created in this environment will be in this region
-#       and inherit these default tags.
-# SECURITY: Using an explicit region prevents accidental deployment to
-#           the wrong region (which could violate data residency requirements).
-# =============================================================================
+# -----------------------------------------------------------------------------
+# AWS Provider Configuration
+# -----------------------------------------------------------------------------
+# Configures the AWS provider with the region and default tags applied to
+# all resources created in this environment.
+# -----------------------------------------------------------------------------
 provider "aws" {
-  # AWS region for all resources in this environment.
-  # WHY: us-east-1 is the primary region for most AWS services and has
-  #       the widest service availability. For FERPA compliance, data must
-  #       remain within US regions.
-  # ALTERNATIVE: us-west-2 as a secondary region for disaster recovery.
+  # Set the AWS region for all resources
+  # WHY: All ECTP dev resources are deployed in a single region
   region = var.aws_region
 
-  # Default tags applied to ALL resources created by this provider.
-  # WHY: Ensures consistent tagging even if individual modules forget
-  #       to apply tags. Tags enable cost allocation and governance.
+  # Apply default tags to every resource created by this provider
+  # WHY: Default tags ensure consistent tagging without repeating in each module
+  # SECURITY: Tags enable cost allocation, compliance scanning, and governance
   default_tags {
     tags = {
-      Project     = var.project_name              # Project for cost allocation
-      Environment = var.environment               # Environment tier
-      ManagedBy   = "terraform"                   # IaC-managed
-      Author      = "Gopi Krishna Vajrala"        # Original author
-      Repository  = "ectp-infrastructure"         # Source code repository
+      # Project name for cost allocation reports
+      Project = var.project_name
+      # Environment for filtering and access control
+      Environment = var.environment
+      # Terraform management indicator to prevent manual modifications
+      ManagedBy = "terraform"
+      # Author for accountability and contact
+      Author = "Gopi Krishna Vajrala"
+      # Workspace identifier for multi-workspace setups
+      Workspace = terraform.workspace
     }
   }
 }
 
-# =============================================================================
-# INPUT VARIABLES
-# =============================================================================
+# -----------------------------------------------------------------------------
+# Input Variables for the Dev Environment
+# -----------------------------------------------------------------------------
 
-variable "project_name" {
-  # WHAT: Project identifier used in resource naming and tagging.
-  description = "Project name for resource naming and cost allocation"
-  type        = string
-  default     = "ectp"
-}
-
-variable "environment" {
-  # WHAT: Deployment environment tier.
-  description = "Deployment environment (dev, staging, prod)"
-  type        = string
-  default     = "dev"
-}
-
+# The AWS region for deploying all resources
 variable "aws_region" {
-  # WHAT: AWS region for all resources.
-  description = "AWS region for infrastructure deployment"
-  type        = string
-  default     = "us-east-1"
+  # Documents the region selection rationale
+  description = "AWS region for deploying all ECTP dev resources"
+  # Enforce string type
+  type = string
+  # Default to US East 1 for broadest service availability
+  default = "us-east-1"
 }
 
-variable "vpc_cidr" {
-  # WHAT: VPC IP address range.
-  description = "CIDR block for the VPC"
-  type        = string
-  default     = "10.0.0.0/16"
+# The project name for resource naming across all modules
+variable "project_name" {
+  # Documents the naming convention
+  description = "Project name used as prefix for all resource names across modules"
+  # Enforce string type
+  type = string
+  # Default to ectp for the Enterprise Cloud Transformation Platform
+  default = "ectp"
 }
 
+# The environment name passed to all modules
+variable "environment" {
+  # Documents that this is fixed to dev for this environment
+  description = "The environment name (fixed to 'dev' for this configuration)"
+  # Enforce string type
+  type = string
+  # Default to dev since this is the dev environment configuration
+  default = "dev"
+}
+
+# The container image URI for the ECTP API
 variable "container_image" {
-  # WHAT: Docker image URI for the ECTP FastAPI application.
-  # WHY: This must be set to the actual ECR repository URI.
-  description = "Docker image URI for the ECTP FastAPI application (e.g., ACCOUNT.dkr.ecr.REGION.amazonaws.com/ectp-app:latest)"
-  type        = string
+  # Documents the expected format
+  description = "Docker container image URI for the ECTP API (e.g., ECR repo URI with tag)"
+  # Enforce string type
+  type = string
 }
 
-variable "container_port" {
-  # WHAT: Port the FastAPI application listens on inside the container.
-  description = "Container port for the FastAPI application"
-  type        = number
-  default     = 8000
-}
-
+# The ACM certificate ARN for HTTPS (optional in dev)
 variable "acm_certificate_arn" {
-  # WHAT: ARN of the ACM certificate for HTTPS on the ALB.
-  # WHY: Required for HTTPS listener. Must be created/imported before applying.
-  description = "ARN of the ACM certificate for ALB HTTPS listener"
-  type        = string
+  # Documents that HTTPS is optional in dev environments
+  description = "ACM certificate ARN for HTTPS on the ALB (optional in dev, required in prod)"
+  # Enforce string type
+  type = string
+  # Default to empty; HTTP-only in dev if no certificate is available
+  default = ""
 }
 
-variable "db_name" {
-  # WHAT: PostgreSQL database name.
-  description = "Name of the PostgreSQL database"
-  type        = string
-  default     = "ectp_db"
-}
-
-variable "db_master_username" {
-  # WHAT: Master username for the RDS instance.
-  # SECURITY: Avoid common names like 'admin' or 'postgres'.
-  description = "Master username for the RDS PostgreSQL instance"
-  type        = string
-  default     = "ectp_admin"
-}
-
-variable "alert_email" {
-  # WHAT: Email address for receiving monitoring alerts.
-  description = "Email address for CloudWatch alarm notifications"
-  type        = string
-  default     = ""
+# Email addresses for alarm notifications
+variable "alert_emails" {
+  # Documents the notification setup
+  description = "List of email addresses to receive CloudWatch alarm notifications"
+  # Enforce list of strings type
+  type = list(string)
+  # Default to empty list
+  default = []
 }
 
 # =============================================================================
-# MODULE: SECURITY
+# MODULE: NETWORKING
 # =============================================================================
-# WHAT: Provisions KMS keys, IAM roles, security groups, and Secrets Manager
-#       secrets. This module runs FIRST because other modules depend on its
-#       outputs (KMS key ARN, security group IDs, IAM role ARNs).
-# WHY: Security infrastructure must exist before compute or data resources
-#       can be created with proper encryption and access controls.
-# DEPENDENCIES: VPC ID from networking module. However, since security groups
-#               need VPC ID and the VPC is in the networking module, we use
-#               a two-phase approach where security depends on networking.
+# Provisions the VPC, subnets (public, private app, private data, isolated),
+# Internet Gateway, NAT Gateways, route tables, NACLs, and VPC endpoints.
+# Dev environment uses 2 AZs (instead of 3) to reduce NAT Gateway costs.
 # =============================================================================
 module "networking" {
-  # Source path relative to this file.
-  # WHY: Using relative paths for local modules ensures portability.
+  # Source the networking module from the modules directory
+  # WHY: Using relative paths keeps all modules within the same repository
   source = "../../modules/networking"
 
-  # Pass project identification variables.
+  # Pass the project name for consistent resource naming
   project_name = var.project_name
-  environment  = var.environment
 
-  # VPC CIDR block for the dev environment.
-  # WHY: 10.0.0.0/16 provides 65,536 addresses, more than enough for dev.
-  vpc_cidr = var.vpc_cidr
+  # Pass the environment name for environment-specific configuration
+  environment = var.environment
 
-  # Subnet CIDR allocations for the 4-tier architecture.
-  # WHY: Each tier gets its own /24 subnet per AZ for clear segmentation.
-  # DEV: Using only 2 AZs to save NAT Gateway costs (~$64/month savings).
-  public_subnet_cidrs       = ["10.0.1.0/24", "10.0.2.0/24"]
-  private_app_subnet_cidrs  = ["10.0.11.0/24", "10.0.12.0/24"]
-  private_data_subnet_cidrs = ["10.0.21.0/24", "10.0.22.0/24"]
-  isolated_subnet_cidrs     = ["10.0.31.0/24", "10.0.32.0/24"]
+  # Use a /16 VPC CIDR for ample address space in dev
+  # WHY: /16 provides 65,536 IPs, sufficient for dev with room for growth
+  vpc_cidr = "10.0.0.0/16"
 
-  # Use 2 AZs for dev (saves one NAT Gateway cost).
-  # WHY: Dev doesn't need the same level of fault tolerance as production.
-  #       2 AZs still provide basic HA for RDS Multi-AZ.
-  # PROD: Override to 3 for production-grade resilience.
+  # Use 2 AZs for dev to reduce costs (saves ~$32/month on NAT Gateways)
+  # WHY: Dev does not need the same level of fault tolerance as production
+  #      2 AZs still provides basic HA for testing multi-AZ functionality
   az_count = 2
 
-  # Shorter log retention for dev (cost savings).
-  # WHY: Dev flow logs are primarily for debugging, not compliance.
-  #       90 days is sufficient for troubleshooting network issues.
-  # PROD: Override to 365 or more for compliance requirements.
-  flow_log_retention_days = 90
+  # Define public subnet CIDRs for ALB and NAT Gateways (2 AZs)
+  # WHY: Public subnets host only the ALB and NAT Gateways
+  public_subnet_cidrs = ["10.0.1.0/24", "10.0.2.0/24"]
 
-  # KMS key for encrypting flow logs.
-  # WHY: Uses the KMS key from the security module for consistent encryption.
+  # Define private app subnet CIDRs for ECS Fargate tasks (2 AZs)
+  # WHY: Application containers run in private subnets behind the ALB
+  private_app_subnet_cidrs = ["10.0.11.0/24", "10.0.12.0/24"]
+
+  # Define private data subnet CIDRs for RDS PostgreSQL (2 AZs)
+  # WHY: Database instances reside in isolated data subnets
+  private_data_subnet_cidrs = ["10.0.21.0/24", "10.0.22.0/24"]
+
+  # Define isolated subnet CIDRs for sensitive data processing (2 AZs)
+  # WHY: Isolated subnets have no internet access for maximum security
+  isolated_subnet_cidrs = ["10.0.31.0/24", "10.0.32.0/24"]
+
+  # Retain VPC Flow Logs for 30 days in dev (shorter than prod)
+  # WHY: Dev environments generate diagnostic logs that are rarely needed
+  #      beyond 30 days; shorter retention reduces costs
+  flow_log_retention_days = 30
+
+  # Use the KMS key from the security module for log encryption
+  # WHY: Even dev logs may contain test data with PII patterns
   kms_key_arn = module.security.kms_key_arn
 
-  # Additional tags for the networking module.
+  # Apply environment-specific tags
   tags = {
-    CostCenter = "engineering-dev"    # Cost allocation to dev team budget
+    # Cost center for dev environment billing
+    CostCenter = "engineering-dev"
+    # Data classification for dev environment
+    DataClassification = "internal"
   }
 }
 
 # =============================================================================
 # MODULE: SECURITY
 # =============================================================================
-# WHAT: Creates KMS keys, IAM roles, and security groups.
-# WHY: Must be created before compute and database modules need them.
-# NOTE: Security groups reference the VPC ID from the networking module.
+# Provisions the KMS encryption key, IAM roles for ECS tasks, Secrets Manager
+# secret for database credentials, and three-tier security groups.
 # =============================================================================
 module "security" {
+  # Source the security module from the modules directory
   source = "../../modules/security"
 
-  # Project identification.
+  # Pass the project name for resource naming
   project_name = var.project_name
-  environment  = var.environment
 
-  # VPC reference for security group creation.
-  # WHY: Security groups are VPC-scoped; they must be created in the
-  #       same VPC as the resources they protect.
-  vpc_id   = module.networking.vpc_id
+  # Pass the environment name for security policy decisions
+  environment = var.environment
+
+  # Pass the VPC ID from the networking module for security group creation
+  # WHY: Security groups are VPC-scoped and must reference the correct VPC
+  vpc_id = module.networking.vpc_id
+
+  # Pass the VPC CIDR for internal traffic security group rules
+  # WHY: DNS and internal traffic rules reference the VPC CIDR
   vpc_cidr = module.networking.vpc_cidr
 
-  # Container port for security group rules.
-  # WHY: Security group rules between ALB and ECS tasks use this port.
-  container_port = var.container_port
+  # Set the container port for app-tier security group rules
+  # WHY: The ALB forwards traffic to containers on this port
+  container_port = 8080
 
-  # Additional tags.
+  # Set the database port for data-tier security group rules
+  # WHY: Application containers connect to PostgreSQL on this port
+  db_port = 5432
+
+  # Set the database name stored in Secrets Manager
+  # WHY: The secret JSON includes the database name for application use
+  db_name = "ectp_db"
+
+  # Set the database username stored in Secrets Manager
+  # WHY: The secret JSON includes the username for application use
+  db_username = "ectp_admin"
+
+  # Apply tags
   tags = {
+    # Cost center
     CostCenter = "engineering-dev"
   }
 }
@@ -283,84 +298,105 @@ module "security" {
 # =============================================================================
 # MODULE: COMPUTE
 # =============================================================================
-# WHAT: Provisions the ECS Fargate cluster, task definitions, ALB, and
-#       auto scaling for the ECTP FastAPI application.
-# WHY: The compute layer runs the application code and handles user traffic.
-# DEPENDENCIES:
-#   - networking: Subnet IDs for ALB and ECS task placement
-#   - security: Security group IDs, IAM role ARNs, KMS key ARN
+# Provisions the ECS Fargate cluster, task definition (512 CPU, 1024 memory),
+# ALB with target group, and auto-scaling policies.
+# Dev environment uses smaller desired count and relaxed scaling limits.
 # =============================================================================
 module "compute" {
+  # Source the compute module from the modules directory
   source = "../../modules/compute"
 
-  # Project identification.
+  # Pass the project name for resource naming
   project_name = var.project_name
-  environment  = var.environment
 
-  # Container configuration.
-  # WHY: Specifies what Docker image to run and on which port.
-  container_image = var.container_image
-  container_port  = var.container_port
+  # Pass the environment name
+  environment = var.environment
 
-  # Dev-appropriate resource allocation.
-  # WHY: Smaller resources for dev to reduce costs.
-  #       0.5 vCPU and 1 GB memory is sufficient for development workloads.
-  # PROD: Override to 1024 (1 vCPU) / 2048 (2 GB) or larger.
-  task_cpu    = 512     # 0.5 vCPU (dev-sized)
-  task_memory = 1024    # 1 GB memory (dev-sized)
+  # Pass the VPC ID for target group association
+  vpc_id = module.networking.vpc_id
 
-  # Task count and scaling configuration.
-  # WHY: Dev needs fewer tasks than production.
-  #       1 task minimum keeps costs low while maintaining a running service.
-  # PROD: Override min_capacity=3, max_capacity=20, desired_count=3.
-  desired_count = 1     # Start with 1 task for dev
-  min_capacity  = 1     # Minimum 1 task (never scale to zero)
-  max_capacity  = 4     # Maximum 4 tasks for dev load testing
+  # Pass public subnet IDs for ALB placement across AZs
+  # WHY: ALB requires subnets in at least 2 AZs for high availability
+  public_subnet_ids = module.networking.public_subnet_ids
 
-  # Network configuration from networking module.
-  # WHY: ALB goes in public subnets; ECS tasks go in private app subnets.
-  vpc_id                 = module.networking.vpc_id
-  public_subnet_ids      = module.networking.public_subnet_ids
+  # Pass private app subnet IDs for ECS task placement
+  # WHY: Fargate tasks run in private subnets behind the ALB
   private_app_subnet_ids = module.networking.private_app_subnet_ids
 
-  # Security configuration from security module.
-  # WHY: Each resource gets its appropriate security group and IAM role.
-  alb_security_group_id  = module.security.alb_security_group_id
-  ecs_security_group_id  = module.security.app_security_group_id
-  ecs_execution_role_arn = module.security.ecs_task_execution_role_arn
-  ecs_task_role_arn      = module.security.ecs_task_role_arn
+  # Pass the container image URI for the ECTP API
+  # WHY: This is the Docker image that ECS will run
+  container_image = var.container_image
 
-  # KMS key for encrypting CloudWatch logs.
+  # Set the container port the application listens on
+  # WHY: Must match the application's configured listening port
+  container_port = 8080
+
+  # Set desired task count to 1 for dev (cost savings)
+  # WHY: Dev does not need multiple tasks; 1 is sufficient for testing
+  #      Auto-scaling can still add more tasks under load
+  desired_count = 1
+
+  # Pass the ALB security group from the security module
+  # WHY: Controls inbound traffic to the ALB
+  alb_security_group_id = module.security.alb_security_group_id
+
+  # Pass the app security group from the security module
+  # WHY: Controls traffic to and from ECS tasks
+  ecs_security_group_id = module.security.app_security_group_id
+
+  # Pass the ECS task execution role from the security module
+  # WHY: Required for image pulls, log writes, and secret fetches
+  ecs_execution_role_arn = module.security.ecs_task_execution_role_arn
+
+  # Pass the ECS task role from the security module
+  # WHY: Application-level permissions for AWS API access
+  ecs_task_role_arn = module.security.ecs_task_role_arn
+
+  # Pass the log group name from the monitoring module
+  # WHY: Container logs are sent to this CloudWatch log group
+  log_group_name = module.monitoring.log_group_name
+
+  # Pass the KMS key ARN for log encryption
+  # WHY: CloudWatch logs are encrypted with the project KMS key
   kms_key_arn = module.security.kms_key_arn
 
-  # ACM certificate for HTTPS.
-  acm_certificate_arn = var.acm_certificate_arn
-
-  # Health check configuration.
-  # WHY: The FastAPI application exposes /health for ALB health checks.
-  health_check_path = "/health"
-
-  # Log retention for dev.
-  # WHY: 30 days is sufficient for dev debugging.
-  # PROD: Override to 90 or 365 days.
-  log_retention_days = 30
-
-  # Secrets to inject into containers.
-  # WHY: Database credentials are fetched from Secrets Manager at startup.
-  # FORMAT: List of {name, valueFrom} objects for ECS task definition.
+  # Pass the Secrets Manager secret ARN for database credentials
+  # WHY: Database credentials are injected into containers at startup
   container_secrets = [
     {
-      name      = "DATABASE_URL"
-      valueFrom = "${module.security.db_secret_arn}:url::"
+      # Inject database username from Secrets Manager
+      name      = "DB_USERNAME"
+      valueFrom = "${module.security.db_secret_arn}:username::"
     },
     {
+      # Inject database password from Secrets Manager
       name      = "DB_PASSWORD"
       valueFrom = "${module.security.db_secret_arn}:password::"
     }
   ]
 
-  # Additional tags.
+  # Pass the ACM certificate ARN for HTTPS (if available)
+  acm_certificate_arn = var.acm_certificate_arn
+
+  # Set ECS task CPU to 512 units (0.5 vCPU) for the ECTP API
+  # WHY: 512 CPU units is cost-effective for dev workloads
+  task_cpu = 512
+
+  # Set ECS task memory to 1024 MiB (1 GB) for the ECTP API
+  # WHY: 1 GB is sufficient for a FastAPI application in dev
+  task_memory = 1024
+
+  # Set minimum capacity for auto-scaling
+  # WHY: 1 task minimum in dev for cost savings
+  min_capacity = 1
+
+  # Set maximum capacity for auto-scaling
+  # WHY: 4 tasks maximum in dev to cap costs during testing
+  max_capacity = 4
+
+  # Apply tags
   tags = {
+    # Cost center
     CostCenter = "engineering-dev"
   }
 }
@@ -368,196 +404,211 @@ module "compute" {
 # =============================================================================
 # MODULE: DATABASE
 # =============================================================================
-# WHAT: Provisions the RDS PostgreSQL database with Multi-AZ, encryption,
-#       and automated backups.
-# WHY: The database stores all ECTP application data including student
-#       records and institutional information.
-# DEPENDENCIES:
-#   - networking: Private data subnet IDs for RDS placement
-#   - security: Database security group ID, KMS key ARN, IAM role ARN
+# Provisions RDS PostgreSQL Multi-AZ with db.r6g.large, encrypted storage,
+# 35-day backup retention, custom parameter group, and event subscription.
+# Dev environment uses the same instance class for production parity testing.
 # =============================================================================
 module "database" {
+  # Source the database module from the modules directory
   source = "../../modules/database"
 
-  # Project identification.
+  # Pass the project name for resource naming
   project_name = var.project_name
-  environment  = var.environment
 
-  # Database configuration.
-  # WHY: PostgreSQL 15 provides the latest features and security patches.
-  db_name              = var.db_name
-  db_master_username   = var.db_master_username
-  engine_version       = "15.4"      # PostgreSQL 15.4 (latest minor version)
-  engine_major_version = "15"         # Major version for parameter group family
+  # Pass the environment name for protection and sizing decisions
+  environment = var.environment
 
-  # Dev-appropriate instance sizing.
-  # WHY: db.t3.medium is a burstable instance type suitable for dev workloads.
-  #       It provides 2 vCPUs and 4 GB memory with burst capability.
-  # COST: Approximately $50/month (compared to ~$200/month for db.r6g.large).
-  # PROD: Override to db.r6g.large or db.r6g.xlarge for consistent performance.
-  instance_class = "db.t3.medium"
+  # Pass the VPC ID for security group and subnet group creation
+  vpc_id = module.networking.vpc_id
 
-  # Storage configuration.
-  # WHY: 20 GB is sufficient for dev data. Autoscaling to 100 GB handles growth.
-  # PROD: Override to allocated_storage=100, max_allocated_storage=500.
-  allocated_storage     = 20    # 20 GB initial storage
-  max_allocated_storage = 100   # Allow autoscaling to 100 GB
-
-  # Multi-AZ for dev.
-  # WHY: true for testing failover scenarios; set to false to save ~$50/month.
-  # SECURITY: Multi-AZ provides AZ-level fault isolation for data protection.
-  multi_az = true
-
-  # Backup configuration.
-  # WHY: 7-day retention for dev is sufficient for accidental data loss recovery.
-  # PROD: Override to 35 days (maximum) for compliance.
-  backup_retention_period = 7
-  backup_window           = "04:00-05:00"      # 4-5 AM UTC (11 PM-midnight EST)
-  maintenance_window      = "sun:05:00-sun:06:00"  # Sunday 5-6 AM UTC
-
-  # Monitoring configuration.
-  # WHY: 60-second Enhanced Monitoring for dev. Provides OS-level metrics.
-  monitoring_interval      = 60
-  rds_monitoring_role_arn  = module.security.rds_monitoring_role_arn
-
-  # Log retention.
-  log_retention_days = 30
-
-  # Network configuration from networking module.
-  # WHY: Database is placed in private data subnets for network isolation.
+  # Pass private data subnet IDs for the DB subnet group
+  # WHY: RDS requires subnets in at least 2 AZs for Multi-AZ deployment
   private_data_subnet_ids = module.networking.private_data_subnet_ids
 
-  # Security configuration from security module.
-  # WHY: Database security group restricts access to only the app tier.
-  db_security_group_id = module.security.db_security_group_id
-  kms_key_arn          = module.security.kms_key_arn
+  # Pass app subnet CIDRs for database security group ingress rules
+  # WHY: Only application subnets should be able to reach the database
+  app_subnet_cidrs = module.networking.private_app_subnet_cidrs
 
-  # Additional tags.
+  # Pass the app security group for SG-to-SG ingress rules
+  # WHY: More secure than CIDR-based rules for database access control
+  app_security_group_id = module.security.app_security_group_id
+
+  # Use db.r6g.large for production parity in dev
+  # WHY: Testing with the same instance class catches size-related issues
+  #      Consider db.t3.medium for strict cost-saving dev environments
+  instance_class = "db.r6g.large"
+
+  # Use PostgreSQL 15.4 engine version
+  # WHY: Match the planned production version for compatibility testing
+  engine_version = "15.4"
+
+  # Set the database name
+  database_name = "ectp_db"
+
+  # Set the master username
+  master_username = "ectp_admin"
+
+  # Pass the generated master password from the security module
+  # WHY: Passwords are generated and stored in Secrets Manager by the security module
+  master_password = module.security.db_master_password
+
+  # Set initial storage to 50 GB for dev (lower than prod)
+  # WHY: Dev environments have less data; 50 GB saves costs
+  allocated_storage = 50
+
+  # Set max storage to 100 GB for dev auto-scaling cap
+  # WHY: Prevents unbounded storage growth in dev
+  max_allocated_storage = 100
+
+  # Pass the KMS key for storage encryption
+  # WHY: Even dev databases should be encrypted for security consistency
+  kms_key_arn = module.security.kms_key_arn
+
+  # Set backup retention to 35 days as required
+  # WHY: 35 days provides compliance-grade backup retention
+  backup_retention_period = 35
+
+  # Set backup window during low-usage hours (UTC)
+  # WHY: 3-4 AM UTC minimizes impact on development activities
+  preferred_backup_window = "03:00-04:00"
+
+  # Set maintenance window to Sunday early morning (UTC)
+  # WHY: Sunday 5-6 AM UTC avoids impacting weekday development
+  preferred_maintenance_window = "sun:05:00-sun:06:00"
+
+  # Pass the SNS topic ARN for database event notifications
+  # WHY: Notifications alert the team about failovers, maintenance, and backups
+  sns_topic_arn = module.monitoring.sns_topic_arn
+
+  # Apply tags
   tags = {
-    CostCenter         = "engineering-dev"
-    DataClassification = "confidential"  # Student data classification
+    # Cost center
+    CostCenter = "engineering-dev"
+    # Data classification for the database
+    DataClassification = "confidential"
   }
 }
 
 # =============================================================================
 # MODULE: MONITORING
 # =============================================================================
-# WHAT: Creates CloudWatch dashboards, alarms, and SNS topics for alerting.
-# WHY: Monitoring is essential for detecting issues before they impact users
-#       and for maintaining SLA compliance.
-# DEPENDENCIES:
-#   - compute: ECS cluster name, service name, ALB ARN suffix
-#   - database: RDS instance ID
-#   - security: KMS key ARN for encrypting SNS messages
+# Provisions CloudWatch log group, metric alarms (CPU, latency, errors),
+# SNS topic for notifications, and an operational dashboard.
+# Dev environment uses relaxed thresholds and shorter log retention.
 # =============================================================================
 module "monitoring" {
+  # Source the monitoring module from the modules directory
   source = "../../modules/monitoring"
 
-  # Project identification.
+  # Pass the project name for resource naming
   project_name = var.project_name
-  environment  = var.environment
-  aws_region   = var.aws_region
 
-  # ECS monitoring targets from compute module.
-  # WHY: Alarms and dashboard widgets reference these identifiers to
-  #       monitor the correct ECS cluster and service.
+  # Pass the environment name for threshold configuration
+  environment = var.environment
+
+  # Pass the AWS region for dashboard configuration
+  aws_region = var.aws_region
+
+  # Pass the KMS key for CloudWatch log encryption
+  kms_key_arn = module.security.kms_key_arn
+
+  # Pass ECS cluster and service names for metric dimensions
+  # WHY: Alarms need to reference the specific ECS cluster and service
   ecs_cluster_name = module.compute.ecs_cluster_name
   ecs_service_name = module.compute.ecs_service_name
 
-  # ALB monitoring targets from compute module.
-  # WHY: ALB metrics use the ARN suffix format for CloudWatch dimensions.
+  # Pass ALB and target group ARN suffixes for ALB metric dimensions
+  # WHY: ALB metrics use ARN suffixes as dimension values
   alb_arn_suffix         = module.compute.alb_arn_suffix
   target_group_arn_suffix = module.compute.target_group_arn_suffix
 
-  # Database monitoring targets from database module.
-  # WHY: RDS alarms reference the DB instance identifier.
-  db_instance_id = module.database.db_instance_id
+  # Pass email addresses for alarm notifications
+  # WHY: Dev team members receive alarm emails for monitoring
+  alert_emails = var.alert_emails
 
-  # Database connection threshold for alarming.
-  # WHY: db.t3.medium supports ~120 max connections.
-  #       Alert at 80% (96 connections) to prevent exhaustion.
-  # PROD: Adjust based on the production instance type's max_connections.
-  db_max_connections_threshold = 96
+  # Set log retention to 30 days for dev (cost savings)
+  # WHY: Dev logs are rarely needed beyond 30 days
+  log_retention_days = 30
 
-  # KMS key for encrypting SNS messages.
-  kms_key_arn = module.security.kms_key_arn
-
-  # Alert email for notifications.
-  # WHY: Email subscription requires manual confirmation after creation.
-  alert_email = var.alert_email
-
-  # Additional tags.
+  # Apply tags
   tags = {
+    # Cost center
     CostCenter = "engineering-dev"
   }
 }
 
 # =============================================================================
-# OUTPUTS
-# =============================================================================
-# Outputs provide essential information for the development team:
-# - Application URL for testing
-# - Database connection details for debugging
-# - Resource identifiers for AWS console navigation
+# OUTPUTS - Key values from the dev environment deployment
 # =============================================================================
 
+# Output the VPC ID for reference
 output "vpc_id" {
-  # WHAT: The VPC ID for reference in other configurations.
-  description = "VPC ID for the dev environment"
-  value       = module.networking.vpc_id
+  # Document the output purpose
+  description = "The VPC ID of the dev environment network"
+  # Reference from the networking module
+  value = module.networking.vpc_id
 }
 
+# Output the ALB DNS name for accessing the ECTP API
 output "alb_dns_name" {
-  # WHAT: The DNS name of the Application Load Balancer.
-  # WHY: Use this to access the ECTP application in the dev environment.
-  #       Create a CNAME DNS record pointing to this ALB DNS name.
-  description = "ALB DNS name for accessing the ECTP application (create a CNAME record pointing to this)"
-  value       = module.compute.alb_dns_name
+  # Document how to access the application
+  description = "The ALB DNS name - use this URL to access the ECTP API in dev"
+  # Reference from the compute module
+  value = module.compute.alb_dns_name
 }
 
-output "ecs_cluster_name" {
-  # WHAT: ECS cluster name for console navigation and CLI commands.
-  description = "ECS cluster name for AWS console navigation and CLI commands"
-  value       = module.compute.ecs_cluster_name
-}
-
-output "ecs_service_name" {
-  # WHAT: ECS service name for deployment and scaling commands.
-  description = "ECS service name for deployments and scaling"
-  value       = module.compute.ecs_service_name
-}
-
+# Output the RDS endpoint for database connections
 output "db_endpoint" {
-  # WHAT: RDS endpoint for database connections.
-  # SECURITY: This endpoint is only resolvable within the VPC.
-  description = "RDS PostgreSQL endpoint (only accessible from within the VPC)"
-  value       = module.database.db_endpoint
+  # Document the database endpoint
+  description = "The RDS PostgreSQL endpoint for database connections"
+  # Reference from the database module
+  value = module.database.db_endpoint
 }
 
-output "db_credentials_secret_arn" {
-  # WHAT: Secrets Manager ARN for retrieving database credentials.
-  # WHY: Use this ARN with `aws secretsmanager get-secret-value` to
-  #       retrieve the database credentials for debugging.
-  description = "Secrets Manager secret ARN containing database credentials"
-  value       = module.security.db_secret_arn
+# Output the ECS cluster name for CLI operations
+output "ecs_cluster_name" {
+  # Document usage for ECS CLI commands
+  description = "The ECS cluster name for AWS CLI operations (ecs describe-services, etc.)"
+  # Reference from the compute module
+  value = module.compute.ecs_cluster_name
 }
 
-output "dashboard_url" {
-  # WHAT: URL to the CloudWatch monitoring dashboard.
-  # WHY: Quick link for the team to monitor the dev environment.
-  description = "CloudWatch dashboard URL for monitoring the dev environment"
-  value       = "https://${var.aws_region}.console.aws.amazon.com/cloudwatch/home?region=${var.aws_region}#dashboards:name=${module.monitoring.dashboard_name}"
+# Output the ECS service name for deployment operations
+output "ecs_service_name" {
+  # Document usage for deployment commands
+  description = "The ECS service name for deployment operations (update-service, etc.)"
+  # Reference from the compute module
+  value = module.compute.ecs_service_name
 }
 
-output "nat_gateway_ips" {
-  # WHAT: Public IPs of NAT Gateways.
-  # WHY: Needed for third-party API firewall allowlisting.
-  description = "NAT Gateway public IPs for third-party firewall allowlisting"
-  value       = module.networking.nat_gateway_public_ips
+# Output the CloudWatch dashboard URL for monitoring
+output "monitoring_dashboard_url" {
+  # Document the monitoring dashboard access
+  description = "URL to the CloudWatch monitoring dashboard for the dev environment"
+  # Reference from the monitoring module
+  value = module.monitoring.dashboard_url
 }
 
+# Output the Secrets Manager secret ARN for reference
+output "db_secret_arn" {
+  # Document the secret ARN for operational use
+  description = "ARN of the Secrets Manager secret containing database credentials"
+  # Reference from the security module
+  value = module.security.db_secret_arn
+}
+
+# Output the KMS key ARN for reference
 output "kms_key_arn" {
-  # WHAT: KMS key ARN for encrypting additional resources.
-  description = "KMS key ARN used for encryption across all ECTP services"
-  value       = module.security.kms_key_arn
+  # Document the KMS key ARN
+  description = "ARN of the KMS key used for encryption across all ECTP services"
+  # Reference from the security module
+  value = module.security.kms_key_arn
+}
+
+# Output the SNS topic ARN for additional subscriptions
+output "sns_topic_arn" {
+  # Document the SNS topic for additional integrations
+  description = "ARN of the SNS topic for alarm notifications (add Slack, PagerDuty, etc.)"
+  # Reference from the monitoring module
+  value = module.monitoring.sns_topic_arn
 }

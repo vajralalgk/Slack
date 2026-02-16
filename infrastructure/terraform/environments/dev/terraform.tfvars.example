@@ -2,126 +2,96 @@
 # Enterprise Cloud Transformation Platform (ECTP) - Dev Environment Variables
 # =============================================================================
 # Author: Gopi Krishna Vajrala
-# Purpose: Example variable values for the ECTP dev environment.
-#          Copy this file to terraform.tfvars and fill in actual values.
-#
-# IMPORTANT SECURITY NOTES:
-#   1. NEVER commit terraform.tfvars to version control (add to .gitignore)
-#   2. NEVER put actual secrets (passwords, API keys) in this file
-#   3. Use environment variables (TF_VAR_*) for sensitive values in CI/CD
-#   4. ACM certificate ARN is the only truly variable input here
+# Description: Example variable values for the ECTP dev environment.
+#              Copy this file to terraform.tfvars and fill in actual values.
 #
 # Usage:
-#   cp terraform.tfvars.example terraform.tfvars
-#   # Edit terraform.tfvars with actual values
-#   terraform plan -var-file="terraform.tfvars"
-#   terraform apply -var-file="terraform.tfvars"
+#   1. Copy this file: cp terraform.tfvars.example terraform.tfvars
+#   2. Replace placeholder values with actual values for your dev environment
+#   3. NEVER commit terraform.tfvars to version control (it may contain secrets)
+#   4. The .gitignore should exclude *.tfvars files
 #
-# Alternative: Set variables via environment variables:
-#   export TF_VAR_container_image="123456789.dkr.ecr.us-east-1.amazonaws.com/ectp-app:v1.0.0"
-#   export TF_VAR_acm_certificate_arn="arn:aws:acm:us-east-1:123456789:certificate/abc-123"
-#   terraform apply
+# Security Notice:
+#   - This file should NOT contain actual secrets or credentials
+#   - Actual credentials are managed via Secrets Manager by the security module
+#   - The container_image should reference your private ECR repository
+#   - Alert emails should be real team member addresses for notification testing
 # =============================================================================
+
+# -----------------------------------------------------------------------------
+# AWS Region Configuration
+# -----------------------------------------------------------------------------
+# The AWS region where all dev environment resources will be deployed.
+# US East 1 is recommended for broadest service availability and lowest latency
+# for teams on the US East Coast.
+# Choose the region closest to your development team for best experience.
+aws_region = "us-east-1"
 
 # -----------------------------------------------------------------------------
 # Project Identification
 # -----------------------------------------------------------------------------
-
-# Project name used as a prefix for all resource names.
-# WHY: Consistent naming enables cost allocation, IAM policy scoping,
-#       and easy identification in the AWS console.
-# CONSTRAINT: Must be lowercase alphanumeric with hyphens, 2-21 characters.
+# The project name used as a prefix for all resource names across modules.
+# This value is used in naming conventions: {project_name}-{environment}-{resource}
+# Must be lowercase alphanumeric with hyphens only (2-21 characters).
 project_name = "ectp"
 
-# Deployment environment tier.
-# WHY: Controls resource sizing, security policies, and retention periods.
-# VALUES: "dev", "staging", "prod"
+# -----------------------------------------------------------------------------
+# Environment Name
+# -----------------------------------------------------------------------------
+# The deployment environment identifier. For this configuration file, this
+# should always be "dev". Other valid values are "staging" and "prod", which
+# have their own environment directories and tfvars files.
 environment = "dev"
 
-# AWS region for all infrastructure.
-# WHY: us-east-1 has the widest AWS service availability.
-#       All data remains within US regions for FERPA compliance.
-# ALTERNATIVE: "us-west-2" for disaster recovery or West Coast proximity.
-aws_region = "us-east-1"
+# -----------------------------------------------------------------------------
+# Container Image Configuration
+# -----------------------------------------------------------------------------
+# The Docker container image URI for the ECTP FastAPI application.
+# This should point to your private ECR repository with a specific image tag.
+# NEVER use "latest" tag in any environment; always use a specific version
+# or commit SHA for deterministic deployments.
+#
+# Format: {account_id}.dkr.ecr.{region}.amazonaws.com/{repo_name}:{tag}
+# Example: 123456789012.dkr.ecr.us-east-1.amazonaws.com/ectp-api:v1.0.0
+#
+# Replace with your actual ECR repository URI and image tag.
+container_image = "123456789012.dkr.ecr.us-east-1.amazonaws.com/ectp-api:latest"
 
 # -----------------------------------------------------------------------------
-# VPC Networking
+# ACM Certificate Configuration (Optional for Dev)
 # -----------------------------------------------------------------------------
-
-# VPC CIDR block defining the IP address range for the entire network.
-# WHY: /16 provides 65,536 addresses for all subnets across all tiers.
-# PLANNING: Ensure this does not overlap with:
-#           - On-premises networks (if VPN/DirectConnect is used)
-#           - Other VPCs in the same account (if peering is used)
-#           - Partner organization networks
-# EXAMPLE RANGES:
-#   Dev:     10.0.0.0/16
-#   Staging: 10.1.0.0/16
-#   Prod:    10.2.0.0/16
-vpc_cidr = "10.0.0.0/16"
-
-# -----------------------------------------------------------------------------
-# Container Configuration
-# -----------------------------------------------------------------------------
-
-# Docker image URI for the ECTP FastAPI application.
-# FORMAT: {account_id}.dkr.ecr.{region}.amazonaws.com/{repo_name}:{tag}
-# WHY: ECS Fargate pulls this image to run the application containers.
-# SECURITY:
-#   - Use a specific version tag (not "latest") for deterministic deployments
-#   - Images should be scanned for vulnerabilities in ECR before deployment
-#   - Use immutable image tags to prevent tag swapping attacks
-# EXAMPLE: "123456789012.dkr.ecr.us-east-1.amazonaws.com/ectp-app:v1.0.0"
-container_image = "ACCOUNT_ID.dkr.ecr.us-east-1.amazonaws.com/ectp-app:latest"
-
-# Port the FastAPI application listens on inside the container.
-# WHY: Must match the PORT environment variable and the Uvicorn/Gunicorn
-#       binding configuration in the application Dockerfile.
-# DEFAULT: 8000 is the standard FastAPI/Uvicorn port.
-# SECURITY: Using a port above 1024 means the container process does not
-#           need root privileges to bind to the port.
-container_port = 8000
+# The ARN of an ACM certificate for HTTPS termination on the ALB.
+# In dev environments, this is optional. If not provided, the ALB will
+# serve HTTP traffic directly (port 80 only, no HTTPS redirect).
+#
+# For production, this MUST be set to enable HTTPS for FERPA compliance.
+# The certificate must be in the same region as the ALB.
+#
+# To create a certificate:
+#   1. Go to AWS Certificate Manager in the correct region
+#   2. Request a public certificate for your domain (e.g., dev.ectp.example.edu)
+#   3. Complete DNS validation
+#   4. Copy the certificate ARN here
+#
+# Format: arn:aws:acm:{region}:{account_id}:certificate/{certificate_id}
+# Leave empty string "" for HTTP-only dev environments.
+acm_certificate_arn = ""
 
 # -----------------------------------------------------------------------------
-# HTTPS / TLS Configuration
+# Alert Email Configuration
 # -----------------------------------------------------------------------------
-
-# ACM certificate ARN for HTTPS on the Application Load Balancer.
-# WHY: Required for the HTTPS listener (port 443) on the ALB.
-#       All traffic to ECTP must be encrypted (FERPA requirement).
-# HOW TO CREATE:
-#   1. Request a certificate in ACM for your domain (e.g., dev.ectp.edu)
-#   2. Validate via DNS or email
-#   3. Copy the ARN here after validation
-# ALTERNATIVE: Import an existing certificate if not using ACM.
-# EXAMPLE: "arn:aws:acm:us-east-1:123456789012:certificate/abcdef-1234-5678-abcd-1234567890ab"
-acm_certificate_arn = "arn:aws:acm:us-east-1:ACCOUNT_ID:certificate/CERTIFICATE_ID"
-
-# -----------------------------------------------------------------------------
-# Database Configuration
-# -----------------------------------------------------------------------------
-
-# PostgreSQL database name.
-# WHY: This is the initial database created on the RDS instance.
-#       The FastAPI application connects to this database.
-# NAMING: Use lowercase with underscores (PostgreSQL convention).
-db_name = "ectp_db"
-
-# Master username for the RDS instance.
-# WHY: The master user has full privileges. The application should use
-#       a less-privileged user created via database migrations.
-# SECURITY: Avoid common names like "admin", "root", or "postgres"
-#           to reduce the risk of credential guessing attacks.
-db_master_username = "ectp_admin"
-
-# -----------------------------------------------------------------------------
-# Monitoring / Alerting
-# -----------------------------------------------------------------------------
-
-# Email address for receiving CloudWatch alarm notifications.
-# WHY: SNS delivers alert emails for critical and warning alarms.
-# NOTE: After terraform apply, you must confirm the SNS subscription
-#       by clicking the link in the confirmation email.
-# LEAVE EMPTY ("") to skip email subscriptions.
-# EXAMPLE: "devops-team@university.edu"
-alert_email = "devops@example.edu"
+# List of email addresses to receive CloudWatch alarm notifications.
+# Each email address will receive a confirmation email from AWS SNS that
+# must be confirmed before notifications are delivered.
+#
+# Recommended recipients for dev:
+#   - Lead developer for the ECTP project
+#   - DevOps/SRE team lead
+#   - Shared team distribution list
+#
+# Each email gets its own SNS subscription that can be independently managed.
+# Add or remove emails as team membership changes.
+alert_emails = [
+  "dev-team@example.edu",
+  "devops@example.edu"
+]
