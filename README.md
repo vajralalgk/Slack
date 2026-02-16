@@ -1,294 +1,410 @@
-# Enterprise Cloud Transformation Platform (ECTP)
+<div align="center">
 
-> **Organization-Wide Cloud-Native Platform for Higher Education Institutions**
->
-> Integrating AWS Cloud Infrastructure | ServiceNow ITSM | Ellucian Higher Ed Systems | Enterprise DevOps Automation
+# 🏛️ Enterprise Cloud Transformation Platform
 
-**Author:** Gopi Krishna Vajrala
-**Version:** 1.0.0
-**Classification:** Internal - Confidential
-**Last Updated:** 2026-02-16
+### **ECTP**
 
----
+<br>
 
-## Executive Summary
-
-The Enterprise Cloud Transformation Platform (ECTP) is a comprehensive, organization-wide solution designed to modernize Higher Education institutions by unifying cloud infrastructure, IT service management, student information systems, and DevOps automation into a single governed platform.
-
-This platform addresses the critical need for digital transformation in Higher Education by providing:
-
-- **Cloud Migration Framework** - Systematic migration of on-premises workloads to AWS
-- **ServiceNow Integration** - Unified IT service management with cloud-native automation
-- **Ellucian Modernization** - API-driven integration with Banner, Colleague, and Ethos platforms
-- **Enterprise DevOps** - Organization-wide CI/CD, infrastructure-as-code, and automation
-- **Governance & Compliance** - FERPA, HIPAA, SOC2 compliance with full audit trails
+[![Version](https://img.shields.io/badge/version-1.0.0-blue.svg?style=for-the-badge)](CHANGELOG.md)
+[![Python](https://img.shields.io/badge/python-3.11+-3776AB.svg?style=for-the-badge&logo=python&logoColor=white)](https://python.org)
+[![Terraform](https://img.shields.io/badge/terraform-1.6+-623CE4.svg?style=for-the-badge&logo=terraform&logoColor=white)](https://terraform.io)
+[![AWS](https://img.shields.io/badge/AWS-Cloud-FF9900.svg?style=for-the-badge&logo=amazonaws&logoColor=white)](https://aws.amazon.com)
+[![FastAPI](https://img.shields.io/badge/FastAPI-0.100+-009688.svg?style=for-the-badge&logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com)
+[![License](https://img.shields.io/badge/license-Proprietary-red.svg?style=for-the-badge)]()
 
 ---
 
-## Table of Contents
+**An organization-wide, cloud-native platform for Higher Education institutions**
 
-- [Architecture Overview](#architecture-overview)
-- [Repository Structure](#repository-structure)
-- [Getting Started](#getting-started)
-- [Technology Stack](#technology-stack)
-- [Module Overview](#module-overview)
-- [Deployment](#deployment)
-- [Security](#security)
-- [Contributing](#contributing)
-- [Versioning](#versioning)
-- [License](#license)
+*Unifying Cloud Infrastructure | ServiceNow ITSM | Ellucian Higher Ed | Enterprise DevOps*
+
+<br>
+
+| **Author** | **Classification** | **Status** | **Last Updated** |
+|:---:|:---:|:---:|:---:|
+| Gopi Krishna Vajrala | Internal - Confidential | Production Ready | 2026-02-16 |
+
+<br>
+
+[Architecture](#-architecture-overview) · [Quick Start](#-quick-start) · [Tech Stack](#-technology-stack) · [Deployment](#-deployment) · [Security](#-security) · [Contributing](#-contributing)
+
+</div>
 
 ---
 
-## Architecture Overview
+## 📋 Executive Summary
+
+> **ECTP transforms how Higher Education institutions manage technology** — replacing fragmented legacy systems with a unified, governed, cloud-native platform that integrates AWS infrastructure, ServiceNow ITSM, Ellucian student systems, and enterprise DevOps automation.
+
+<table>
+<tr>
+<td width="50%">
+
+### 🎯 What We Solve
+
+- **Legacy Infrastructure** — 15-20 year old servers reaching end-of-life
+- **Manual Operations** — 70% of IT tasks still done by hand
+- **Siloed Systems** — Banner, ServiceNow, AWS disconnected
+- **Compliance Gaps** — FERPA/HIPAA audit findings
+- **Cost Opacity** — No visibility into department-level spending
+
+</td>
+<td width="50%">
+
+### ✅ What We Deliver
+
+- **30-40% Cost Reduction** in infrastructure spending
+- **85% Automation** of IT operations
+- **99.95% Availability** for critical services
+- **Real-time Compliance** monitoring (FERPA/HIPAA/SOC2)
+- **Same-day Deployments** vs. monthly release cycles
+
+</td>
+</tr>
+</table>
+
+---
+
+## 🏗️ Architecture Overview
 
 ```
-                    ┌─────────────────────────────────────┐
-                    │         API Gateway (Kong/AWS)       │
-                    └──────────────┬──────────────────────┘
-                                   │
-              ┌────────────────────┼────────────────────┐
-              │                    │                     │
-    ┌─────────▼──────┐  ┌────────▼────────┐  ┌────────▼────────┐
-    │  Cloud Migration │  │  ServiceNow    │  │  Ellucian       │
-    │  Service         │  │  Integration   │  │  Integration    │
-    └─────────┬──────┘  └────────┬────────┘  └────────┬────────┘
-              │                    │                     │
-    ┌─────────▼──────────────────▼─────────────────────▼────────┐
-    │                    Core Services Layer                      │
-    │  (Config | Logging | Auth | Monitoring | Cost Governance)  │
-    └─────────┬──────────────────┬─────────────────────┬────────┘
-              │                    │                     │
-    ┌─────────▼──────┐  ┌────────▼────────┐  ┌────────▼────────┐
-    │  AWS Services   │  │  Database Layer │  │  Message Queue  │
-    │  (EC2/ECS/RDS)  │  │  (RDS/DynamoDB) │  │  (SQS/SNS)     │
-    └────────────────┘  └─────────────────┘  └─────────────────┘
+                          ┌─────────────────────────────────────────┐
+                          │           EXTERNAL USERS                 │
+                          │   Students | Faculty | Staff | Partners  │
+                          └──────────────────┬──────────────────────┘
+                                             │
+                          ┌──────────────────▼──────────────────────┐
+                          │     🛡️ CDN + WAF + DDoS Protection      │
+                          │         (CloudFront + Shield)            │
+                          └──────────────────┬──────────────────────┘
+                                             │
+                          ┌──────────────────▼──────────────────────┐
+                          │     ⚖️ Application Load Balancer         │
+                          │        (HTTPS + Rate Limiting)           │
+                          └──────────────────┬──────────────────────┘
+                                             │
+              ┌──────────────────────────────┼──────────────────────────────┐
+              │                              │                              │
+   ┌──────────▼──────────┐    ┌─────────────▼────────────┐   ┌────────────▼───────────┐
+   │  ☁️ Cloud Migration  │    │  🔧 ServiceNow           │   │  🎓 Ellucian           │
+   │                      │    │     Integration           │   │     Integration        │
+   │  • Discovery         │    │  • Incident Management   │   │  • Banner/Ethos API    │
+   │  • Assessment        │    │  • Change Management     │   │  • Student Data        │
+   │  • 6R Migration      │    │  • CMDB Sync             │   │  • Enrollment          │
+   │  • Validation        │    │  • Automation             │   │  • Financial Aid       │
+   └──────────┬──────────┘    └─────────────┬────────────┘   └────────────┬───────────┘
+              │                              │                              │
+   ┌──────────▼──────────────────────────────▼──────────────────────────────▼───────────┐
+   │                           ⚙️ CORE SERVICES LAYER                                   │
+   │                                                                                     │
+   │   Config Manager  │  Structured Logging  │  Auth & Identity  │  Event Bus           │
+   │   Cost Governance  │  Health Monitoring   │  Audit Logger     │  Workflow Engine     │
+   └──────────┬──────────────────────────────────────────────────────────────┬───────────┘
+              │                                                              │
+   ┌──────────▼──────────┐    ┌──────────────────────┐    ┌─────────────────▼───────────┐
+   │  💾 Data Layer       │    │  📨 Messaging Layer  │    │  📦 Storage Layer           │
+   │  RDS PostgreSQL     │    │  SQS + SNS           │    │  S3 + EFS                  │
+   │  ElastiCache Redis  │    │  EventBridge         │    │  Glacier Archives          │
+   │  DynamoDB           │    │  Step Functions      │    │  AWS Backup                │
+   └─────────────────────┘    └──────────────────────┘    └─────────────────────────────┘
 ```
 
 ---
 
-## Repository Structure
+## 📁 Repository Structure
+
+<details>
+<summary><b>Click to expand full directory tree</b></summary>
 
 ```
 ECTP/
-├── docs/                          # All documentation
-│   ├── architecture/              # Architecture documents and ADRs
-│   ├── design/                    # Design specifications
-│   ├── governance/                # Governance framework and policies
-│   ├── runbooks/                  # Operational runbooks
-│   ├── user-guides/               # End-user documentation
-│   ├── compliance/                # Compliance documentation
-│   └── adr/                       # Architecture Decision Records
-├── architecture/                  # Architecture artifacts
-│   ├── diagrams/                  # Architecture diagrams (draw.io, PlantUML)
-│   ├── patterns/                  # Design patterns used
-│   └── decisions/                 # Technical decision logs
-├── src/                           # Source code
-│   ├── core/                      # Core shared modules
-│   │   ├── config/                # Configuration management
-│   │   ├── logging/               # Centralized logging
-│   │   ├── utils/                 # Shared utilities
-│   │   └── exceptions/            # Custom exception handlers
-│   ├── integrations/              # External system integrations
-│   │   ├── aws/                   # AWS service integrations
-│   │   ├── servicenow/            # ServiceNow ITSM integration
-│   │   ├── ellucian/              # Ellucian (Banner/Ethos) integration
-│   │   └── identity/              # Identity provider integration
-│   ├── api/                       # REST API layer
-│   │   ├── routes/                # API route definitions
-│   │   ├── middleware/            # Request/response middleware
-│   │   ├── models/                # Data models
-│   │   └── schemas/               # Validation schemas
-│   ├── services/                  # Business logic services
-│   │   ├── cloud-migration/       # Migration orchestration
-│   │   ├── cost-governance/       # Cost tracking and optimization
-│   │   ├── automation-engine/     # Workflow automation
-│   │   └── monitoring/            # Health and performance monitoring
-│   └── workers/                   # Background job processors
-├── infrastructure/                # Infrastructure as Code
-│   ├── terraform/                 # Terraform modules
-│   │   ├── modules/               # Reusable Terraform modules
-│   │   └── environments/          # Environment-specific configs
-│   ├── cloudformation/            # AWS CloudFormation templates
-│   └── scripts/                   # Infrastructure scripts
-├── automation/                    # CI/CD and automation
-│   ├── ci-cd/                     # Pipeline definitions
-│   ├── scripts/                   # Automation scripts
-│   └── ansible/                   # Configuration management
-├── tests/                         # Test suites
-│   ├── unit/                      # Unit tests
-│   ├── integration/               # Integration tests
-│   ├── e2e/                       # End-to-end tests
-│   ├── performance/               # Load and performance tests
-│   └── security/                  # Security scanning tests
-├── deployment/                    # Deployment artifacts
-│   ├── kubernetes/                # K8s manifests
-│   ├── docker/                    # Dockerfiles
-│   ├── helm-charts/               # Helm charts
-│   └── scripts/                   # Deployment scripts
-├── ppt/                           # Presentation materials
-│   ├── slides/                    # Slide content
-│   ├── assets/                    # Images, diagrams, icons
-│   └── templates/                 # Slide templates
-├── monitoring/                    # Monitoring configuration
-│   ├── dashboards/                # Grafana/CloudWatch dashboards
-│   ├── alerts/                    # Alert rules
-│   └── sla-configs/               # SLA monitoring configs
-├── security/                      # Security artifacts
-│   ├── policies/                  # Security policies
-│   ├── scanning/                  # Security scan configs
-│   └── certificates/              # Certificate management
-└── .github/                       # GitHub configurations
-    ├── workflows/                 # GitHub Actions
-    ├── ISSUE_TEMPLATE/            # Issue templates
-    └── PULL_REQUEST_TEMPLATE/     # PR templates
+│
+├── 📄 README.md                        # You are here
+├── 📄 CONTRIBUTING.md                   # Contribution guidelines
+├── 📄 CHANGELOG.md                      # Release history
+├── 📄 pyproject.toml                    # Python project configuration
+├── 📄 requirements.txt                  # Python dependencies
+├── 📄 .env.example                      # Environment template
+│
+├── 📂 src/                              # ─── SOURCE CODE ───────────────
+│   ├── 📂 core/                         # Shared platform core
+│   │   ├── config/settings.py           #   Pydantic-based configuration
+│   │   ├── logging/logger.py            #   Structured JSON logging
+│   │   ├── exceptions/handlers.py       #   Custom exception hierarchy
+│   │   └── utils/helpers.py             #   Utility functions
+│   ├── 📂 api/                          # REST API layer (FastAPI)
+│   │   ├── main.py                      #   Application factory
+│   │   └── routes/                      #   API endpoints
+│   │       ├── health.py                #     Health & readiness checks
+│   │       ├── migration.py             #     Cloud migration API
+│   │       ├── servicenow.py            #     ServiceNow integration API
+│   │       ├── ellucian.py              #     Ellucian/Ethos API
+│   │       └── cost_governance.py       #     Cost governance API
+│   ├── 📂 integrations/                 # External system connectors
+│   │   ├── aws/client.py                #   AWS SDK wrapper
+│   │   ├── servicenow/client.py         #   ServiceNow REST client
+│   │   └── ellucian/client.py           #   Ellucian Ethos client
+│   └── 📂 services/                     # Business logic layer
+│
+├── 📂 infrastructure/                   # ─── INFRASTRUCTURE AS CODE ────
+│   └── 📂 terraform/
+│       ├── modules/                     # Reusable Terraform modules
+│       │   ├── networking/              #   VPC, subnets, routing
+│       │   ├── compute/                 #   ECS Fargate, ALB, auto-scaling
+│       │   ├── database/                #   RDS PostgreSQL, backups
+│       │   ├── security/                #   KMS, IAM, secrets, SGs
+│       │   └── monitoring/              #   CloudWatch, SNS, dashboards
+│       └── environments/
+│           └── dev/                     #   Dev environment config
+│
+├── 📂 deployment/                       # ─── DEPLOYMENT ────────────────
+│   ├── docker/
+│   │   ├── Dockerfile                   #   Multi-stage production build
+│   │   └── docker-compose.yml           #   Local development stack
+│   └── kubernetes/
+│       └── base/                        #   K8s base manifests
+│
+├── 📂 docs/                             # ─── DOCUMENTATION ─────────────
+│   ├── architecture/                    #   Architecture & roadmap
+│   ├── design/                          #   API design standards
+│   ├── governance/                      #   Governance & project charter
+│   ├── runbooks/                        #   Admin & deployment guides
+│   ├── user-guides/                     #   Getting started guide
+│   └── adr/                             #   Architecture Decision Records
+│
+├── 📂 monitoring/                       # ─── OBSERVABILITY ─────────────
+│   ├── dashboards/                      #   CloudWatch dashboard JSON
+│   ├── alerts/                          #   Alert rules YAML
+│   └── sla-configs/                     #   SLA definitions
+│
+├── 📂 security/                         # ─── SECURITY ──────────────────
+│   ├── policies/                        #   Security policy & IAM
+│   └── scanning/                        #   SAST configuration
+│
+├── 📂 automation/                       # ─── AUTOMATION ────────────────
+│   └── scripts/
+│       ├── deployment/deploy.sh         #   Deployment script
+│       └── rollback/rollback.sh         #   Rollback script
+│
+├── 📂 tests/                            # ─── TESTING ───────────────────
+│   ├── unit/                            #   Unit tests
+│   ├── integration/                     #   Integration tests
+│   ├── e2e/                             #   End-to-end tests
+│   ├── performance/                     #   Load tests
+│   └── security/                        #   Security tests
+│
+├── 📂 ppt/                              # ─── PRESENTATIONS ─────────────
+│   └── slides/                          #   Executive presentation
+│
+└── 📂 .github/                          # ─── CI/CD ─────────────────────
+    ├── workflows/                       #   GitHub Actions pipelines
+    ├── ISSUE_TEMPLATE/                  #   Issue templates
+    └── PULL_REQUEST_TEMPLATE/           #   PR template
 ```
+
+</details>
 
 ---
 
-## Getting Started
+## 🚀 Quick Start
 
 ### Prerequisites
 
-| Tool | Version | Purpose |
-|------|---------|---------|
-| Python | >= 3.11 | Core application runtime |
-| Terraform | >= 1.6 | Infrastructure provisioning |
-| AWS CLI | >= 2.x | AWS service management |
-| Docker | >= 24.x | Containerization |
-| kubectl | >= 1.28 | Kubernetes management |
-| Node.js | >= 20 LTS | Build tooling |
-| Helm | >= 3.x | Kubernetes package management |
+| Tool | Version | Status |
+|:-----|:--------|:------:|
+| Python | >= 3.11 | Required |
+| Terraform | >= 1.6 | Required |
+| AWS CLI | >= 2.x | Required |
+| Docker | >= 24.x | Required |
+| kubectl | >= 1.28 | Optional |
 
-### Quick Start
+### Setup in 5 Minutes
 
 ```bash
-# Clone the repository
-git clone <repository-url>
-cd ECTP
-
-# Install Python dependencies
+# 1️⃣  Clone & install
+git clone <repository-url> && cd ECTP
+python3.11 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 
-# Configure environment
-cp .env.example .env
-# Edit .env with your configuration
+# 2️⃣  Configure
+cp .env.example .env       # Edit with your settings
 
-# Initialize Terraform
-cd infrastructure/terraform/environments/dev
-terraform init
+# 3️⃣  Start local services
+docker-compose -f deployment/docker/docker-compose.yml up -d
 
-# Run the application
-python -m src.api.main
+# 4️⃣  Run the API
+uvicorn src.api.main:app --reload --host 0.0.0.0 --port 8000
 
-# Run tests
-pytest tests/ -v --cov=src
+# 5️⃣  Verify
+curl http://localhost:8000/api/v1/health
 ```
 
-### Environment Setup
+> **After startup:** API Docs at `http://localhost:8000/docs` | Health at `http://localhost:8000/api/v1/health`
 
-```bash
-# AWS Configuration
-export AWS_PROFILE=ectp-dev
-export AWS_REGION=us-east-1
+---
 
-# Application Configuration
-export ECTP_ENV=development
-export ECTP_LOG_LEVEL=DEBUG
-export ECTP_DB_HOST=localhost
+## 🛠️ Technology Stack
+
+<table>
+<tr>
+<td width="33%" valign="top">
+
+### Application
+| | Technology |
+|:--|:--|
+| **Runtime** | Python 3.11+ |
+| **API** | FastAPI |
+| **ORM** | SQLAlchemy 2.0 |
+| **Validation** | Pydantic v2 |
+| **HTTP** | httpx (async) |
+| **Logging** | structlog |
+
+</td>
+<td width="33%" valign="top">
+
+### Infrastructure
+| | Technology |
+|:--|:--|
+| **Cloud** | AWS |
+| **IaC** | Terraform |
+| **Compute** | ECS Fargate |
+| **Database** | RDS PostgreSQL |
+| **Cache** | ElastiCache Redis |
+| **Queue** | SQS / SNS |
+
+</td>
+<td width="33%" valign="top">
+
+### Operations
+| | Technology |
+|:--|:--|
+| **CI/CD** | GitHub Actions |
+| **Containers** | Docker |
+| **Orchestration** | Kubernetes |
+| **Monitoring** | CloudWatch |
+| **Security** | GuardDuty |
+| **Identity** | Cognito + SAML |
+
+</td>
+</tr>
+</table>
+
+### Integration Partners
+
+| System | Protocol | Purpose |
+|:-------|:---------|:--------|
+| **ServiceNow** | REST + OAuth 2.0 | IT Service Management — incidents, changes, CMDB |
+| **Ellucian Ethos** | REST + API Key | Higher Ed — student records, enrollment, financial aid |
+| **Active Directory** | SAML 2.0 / LDAP | Identity federation and SSO |
+
+---
+
+## 📦 Platform Modules
+
+<table>
+<tr>
+<td width="50%">
+
+### ☁️ Cloud Migration
+Orchestrates systematic migration using the **6R strategy** — Rehost, Replatform, Repurchase, Refactor, Retire, Retain. Includes workload discovery, assessment scoring, and automated migration execution.
+
+### 🔧 ServiceNow Integration
+**Bidirectional** sync with ServiceNow ITSM. Automated incident creation from CloudWatch alarms, change request workflows for deployments, and CMDB synchronization of cloud resources.
+
+### 💰 Cost Governance
+Real-time cost tracking by department, tagging compliance enforcement, budget alerting at 50/80/100% thresholds, and AI-driven optimization recommendations.
+
+</td>
+<td width="50%">
+
+### 🎓 Ellucian Integration
+**FERPA-compliant** API integration with Banner/Colleague through the Ethos platform. Student data retrieval with audit logging, enrollment analytics, and academic period synchronization.
+
+### ⚡ Automation Engine
+Event-driven workflows for auto-scaling, self-healing, scheduled maintenance, and compliance remediation. Powered by SQS/SNS/EventBridge/Step Functions.
+
+### 📊 Monitoring & Observability
+Three-pillar observability: **Metrics** (CloudWatch), **Logs** (structured JSON), **Traces** (X-Ray). SLA dashboards, anomaly detection, and PagerDuty integration.
+
+</td>
+</tr>
+</table>
+
+---
+
+## 🚢 Deployment
+
+### Environment Promotion Pipeline
+
+```
+  ┌─────────┐     ┌─────────┐     ┌─────────┐     ┌─────────────┐
+  │   DEV   │────▶│   QA    │────▶│   UAT   │────▶│ PRODUCTION  │
+  │  Auto   │     │  Auto   │     │ Manual  │     │   Manual    │
+  │ Deploy  │     │ Deploy  │     │Approval │     │ Change Board│
+  └─────────┘     └─────────┘     └─────────┘     └─────────────┘
 ```
 
----
+| Environment | Trigger | Approval | Terraform Workspace |
+|:------------|:--------|:---------|:-------------------|
+| **Dev** | Push to `dev` branch | None (automatic) | `ectp-dev` |
+| **QA** | Merge to `dev` | Team Lead | `ectp-qa` |
+| **UAT** | Manual trigger | Product Owner | `ectp-uat` |
+| **Production** | Manual trigger | Change Board (2 approvers) | `ectp-prod` |
 
-## Technology Stack
-
-| Layer | Technology | Justification |
-|-------|-----------|---------------|
-| **Runtime** | Python 3.11+ | Enterprise adoption, extensive AWS SDK, strong typing |
-| **API Framework** | FastAPI | High performance, auto-documentation, async support |
-| **Infrastructure** | Terraform | Multi-cloud IaC, state management, module ecosystem |
-| **Cloud** | AWS | Market leader, Higher Ed adoption, compliance certifications |
-| **Containers** | Docker + ECS/EKS | Portability, scaling, managed orchestration |
-| **Database** | PostgreSQL (RDS) | ACID compliance, JSON support, enterprise proven |
-| **Cache** | ElastiCache (Redis) | Session management, high-speed caching |
-| **Queue** | SQS/SNS | Managed messaging, dead-letter support |
-| **Monitoring** | CloudWatch + Grafana | Unified observability, custom dashboards |
-| **CI/CD** | GitHub Actions | Native integration, marketplace actions |
-| **ITSM** | ServiceNow | Industry standard for IT service management |
-| **Higher Ed** | Ellucian Ethos | Standard Higher Ed integration platform |
-| **Identity** | AWS Cognito + SAML | SSO, MFA, federated identity |
+> **Rollback:** One-command rollback via `./automation/scripts/rollback/rollback.sh <env>`
 
 ---
 
-## Module Overview
+## 🔒 Security
 
-### 1. Cloud Migration Service
-Orchestrates systematic migration of on-premises workloads to AWS using the 6R strategy (Rehost, Replatform, Repurchase, Refactor, Retire, Retain).
+<table>
+<tr>
+<td width="50%">
 
-### 2. ServiceNow Integration
-Bi-directional integration with ServiceNow for incident management, change management, and CMDB synchronization with cloud resources.
+### Defense in Depth
 
-### 3. Ellucian Integration
-API-driven integration with Ellucian Banner/Colleague through the Ethos platform for student data, enrollment, and institutional reporting.
+| Layer | Controls |
+|:------|:---------|
+| **Perimeter** | WAF, Shield Advanced, CloudFront |
+| **Network** | VPC isolation, private subnets, NACLs |
+| **Identity** | Cognito + SAML, MFA, RBAC |
+| **Application** | Input validation, JWT, rate limiting |
+| **Data** | AES-256 at rest, TLS 1.3 in transit |
+| **Monitoring** | GuardDuty, CloudTrail, Security Hub |
 
-### 4. Cost Governance
-Real-time cost tracking, budget alerts, resource tagging enforcement, and optimization recommendations across all AWS accounts.
+</td>
+<td width="50%">
 
-### 5. Automation Engine
-Event-driven workflow automation for provisioning, scaling, patching, and compliance remediation.
+### Compliance
 
-### 6. Monitoring & Observability
-Unified monitoring across all platform components with SLA tracking, anomaly detection, and automated alerting.
+| Regulation | Coverage |
+|:-----------|:---------|
+| **FERPA** | Student data protection + audit trails |
+| **HIPAA** | Health data encryption + BAAs |
+| **SOC 2** | Security & availability controls |
+| **PCI DSS** | Payment data handling |
 
----
+**Automated:** Continuous compliance monitoring via AWS Config + Security Hub. No more annual-only audits.
 
-## Deployment
-
-### Environment Strategy
-
-| Environment | Purpose | AWS Account | Approval |
-|------------|---------|-------------|----------|
-| **Dev** | Development and testing | ectp-dev | Automatic |
-| **QA** | Quality assurance | ectp-qa | Team Lead |
-| **UAT** | User acceptance testing | ectp-uat | Product Owner |
-| **Prod** | Production | ectp-prod | Change Board |
-
-### Deployment Pipeline
-
-```
-Code Commit → Lint/Test → Build → Dev Deploy → Integration Tests →
-QA Deploy → QA Tests → UAT Deploy → UAT Sign-off → Prod Deploy
-```
-
-See [Deployment Guide](docs/runbooks/deployment-guide.md) for detailed instructions.
+</td>
+</tr>
+</table>
 
 ---
 
-## Security
+## 🤝 Contributing
 
-- **Authentication:** AWS Cognito with SAML 2.0 federation
-- **Authorization:** RBAC with fine-grained IAM policies
-- **Encryption:** AES-256 at rest, TLS 1.3 in transit
-- **Compliance:** FERPA, HIPAA, SOC2, PCI-DSS alignment
-- **Scanning:** Automated SAST/DAST in CI/CD pipeline
-- **Audit:** CloudTrail + centralized logging for all actions
-
-See [Security Policies](security/policies/) for detailed security documentation.
-
----
-
-## Contributing
-
-Please read [CONTRIBUTING.md](CONTRIBUTING.md) for details on our code of conduct, development workflow, and the process for submitting pull requests.
+Please read **[CONTRIBUTING.md](CONTRIBUTING.md)** for our development workflow, code standards, and PR process.
 
 ### Branch Strategy
 
 ```
-main          ← Production-ready code (protected)
-  └── dev     ← Integration branch
-       └── feature/ECTP-XXX-description  ← Feature branches
-       └── bugfix/ECTP-XXX-description   ← Bug fix branches
-       └── hotfix/ECTP-XXX-description   ← Production hotfixes
+main              ← Production-ready (protected, requires 2 reviewers)
+  └── dev         ← Integration branch (CI runs on every push)
+       ├── feature/ECTP-XXX-description
+       ├── bugfix/ECTP-XXX-description
+       └── hotfix/ECTP-XXX-description
 ```
 
 ### Commit Convention
@@ -296,32 +412,51 @@ main          ← Production-ready code (protected)
 ```
 type(scope): description
 
-Types: feat, fix, docs, style, refactor, perf, test, chore
-Scope: core, aws, servicenow, ellucian, infra, ci, docs
+# Types:  feat | fix | docs | style | refactor | perf | test | chore
+# Scopes: core | aws | servicenow | ellucian | infra | ci | docs
 ```
 
 ---
 
-## Versioning
+## 📚 Documentation Index
 
-This project uses [Semantic Versioning](https://semver.org/):
-
-- **MAJOR:** Breaking API changes or architectural shifts
-- **MINOR:** New features, backward-compatible
-- **PATCH:** Bug fixes, backward-compatible
-
-Current Version: **1.0.0**
+| Document | Description | Location |
+|:---------|:------------|:---------|
+| Architecture Document | Full platform architecture (16 sections) | [`docs/architecture/`](docs/architecture/architecture-document.md) |
+| Executive Presentation | 18-slide stakeholder deck | [`ppt/slides/`](ppt/slides/ECTP-Executive-Presentation.md) |
+| Governance Framework | Governance structure & policies | [`docs/governance/`](docs/governance/governance-framework.md) |
+| Project Charter | Budget, timeline, stakeholders | [`docs/governance/`](docs/governance/project-charter.md) |
+| Security Policy | Security controls & compliance | [`security/policies/`](security/policies/security-policy.md) |
+| Admin Runbook | Daily ops, incident response | [`docs/runbooks/`](docs/runbooks/admin-runbook.md) |
+| Deployment Guide | Step-by-step deployment | [`docs/runbooks/`](docs/runbooks/deployment-guide.md) |
+| API Design Standards | REST API conventions | [`docs/design/`](docs/design/api-design-standards.md) |
+| Getting Started | New team member onboarding | [`docs/user-guides/`](docs/user-guides/getting-started.md) |
+| ADR-001 | Why FastAPI? | [`docs/adr/`](docs/adr/ADR-001-fastapi-framework.md) |
+| ADR-002 | Why Terraform? | [`docs/adr/`](docs/adr/ADR-002-terraform-iac.md) |
+| ADR-003 | Why AWS? | [`docs/adr/`](docs/adr/ADR-003-aws-cloud-provider.md) |
+| Future Roadmap | 5-phase innovation plan | [`docs/architecture/`](docs/architecture/future-roadmap.md) |
 
 ---
 
-## License
+<div align="center">
 
-This project is proprietary software. All rights reserved.
-Copyright (c) 2026 - Gopi Krishna Vajrala
+### 📊 Project Metrics
+
+| Metric | Current | Target |
+|:-------|:-------:|:------:|
+| Infrastructure Cost | Baseline | **30-40% reduction** |
+| Deployment Frequency | Monthly | **Daily / On-demand** |
+| Mean Time to Recovery | 4-8 hours | **< 30 minutes** |
+| System Availability | 99.5% | **99.95%** |
+| IT Automation | 30% | **85%** |
+| Compliance | Annual audits | **Continuous** |
 
 ---
 
-## Contact
+**Designed & Engineered by [Gopi Krishna Vajrala]()**
 
-**Author & Architect:** Gopi Krishna Vajrala
-**Project:** Enterprise Cloud Transformation Platform (ECTP)
+Enterprise Cloud Transformation Platform (ECTP) v1.0.0
+
+Copyright &copy; 2026 — All Rights Reserved
+
+</div>

@@ -1,421 +1,547 @@
-# Enterprise Cloud Transformation Platform (ECTP)
-# High-Level Architecture Document
+<div align="center">
 
-**Document ID:** ECTP-ARCH-001
-**Author:** Gopi Krishna Vajrala
-**Version:** 1.0.0
-**Date:** 2026-02-16
-**Classification:** Internal - Confidential
-**Status:** Approved
+# 🏛️ Enterprise Cloud Transformation Platform
+
+## High-Level Architecture Document
+
+<br>
+
+[![Document](https://img.shields.io/badge/Document-ECTP--ARCH--001-blue.svg?style=for-the-badge)]()
+[![Version](https://img.shields.io/badge/version-1.0.0-green.svg?style=for-the-badge)]()
+[![Status](https://img.shields.io/badge/status-Approved-brightgreen.svg?style=for-the-badge)]()
+[![Classification](https://img.shields.io/badge/classification-Confidential-red.svg?style=for-the-badge)]()
+
+<br>
+
+| **Author** | **Date** | **Review Status** | **Next Review** |
+|:---:|:---:|:---:|:---:|
+| **Gopi Krishna Vajrala** | 2026-02-16 | Approved | 2026-08-16 |
+
+</div>
 
 ---
 
-## Document Control
+## 📋 Document Control
 
 | Version | Date | Author | Changes |
-|---------|------|--------|---------|
+|:--------|:-----|:-------|:--------|
 | 1.0.0 | 2026-02-16 | Gopi Krishna Vajrala | Initial release |
 
 ---
 
-## Table of Contents
+## 📑 Table of Contents
 
-1. [Executive Summary](#1-executive-summary)
-2. [Business Objectives](#2-business-objectives)
-3. [Organization-Wide Impact](#3-organization-wide-impact)
-4. [Architecture Overview](#4-architecture-overview)
-5. [Logical Architecture](#5-logical-architecture)
-6. [Physical Architecture](#6-physical-architecture)
-7. [Integration Points](#7-integration-points)
-8. [Security Model](#8-security-model)
-9. [Compliance Considerations](#9-compliance-considerations)
-10. [Scalability Model](#10-scalability-model)
-11. [Monitoring & Observability](#11-monitoring--observability)
-12. [Cost Governance](#12-cost-governance)
-13. [Risk Assessment](#13-risk-assessment)
-14. [Data Architecture](#14-data-architecture)
-15. [Disaster Recovery](#15-disaster-recovery)
-16. [Future Roadmap](#16-future-roadmap)
+<table>
+<tr>
+<td width="50%" valign="top">
+
+| # | Section |
+|:-:|:--------|
+| 1 | [Executive Summary](#1--executive-summary) |
+| 2 | [Business Objectives](#2--business-objectives) |
+| 3 | [Organization-Wide Impact](#3--organization-wide-impact) |
+| 4 | [Architecture Overview](#4--architecture-overview) |
+| 5 | [Logical Architecture](#5--logical-architecture) |
+| 6 | [Physical Architecture](#6--physical-architecture) |
+| 7 | [Integration Points](#7--integration-points) |
+| 8 | [Security Model](#8--security-model) |
+
+</td>
+<td width="50%" valign="top">
+
+| # | Section |
+|:-:|:--------|
+| 9 | [Compliance Considerations](#9--compliance-considerations) |
+| 10 | [Scalability Model](#10--scalability-model) |
+| 11 | [Monitoring & Observability](#11--monitoring--observability) |
+| 12 | [Cost Governance](#12--cost-governance) |
+| 13 | [Risk Assessment](#13--risk-assessment) |
+| 14 | [Data Architecture](#14--data-architecture) |
+| 15 | [Disaster Recovery](#15--disaster-recovery) |
+| 16 | [Future Roadmap](#16--future-roadmap) |
+
+</td>
+</tr>
+</table>
 
 ---
 
-## 1. Executive Summary
+<div align="center">
 
-The Enterprise Cloud Transformation Platform (ECTP) is a strategic initiative to modernize the entire technology landscape of Higher Education institutions. It provides a unified, governed platform that:
+## 1 · Executive Summary
 
-- **Migrates** on-premises infrastructure to AWS cloud systematically
-- **Integrates** ServiceNow ITSM with cloud-native operations
-- **Modernizes** Ellucian Higher Ed systems through API-first architecture
-- **Automates** DevOps processes across all organizational teams
-- **Governs** costs, security, and compliance at enterprise scale
+</div>
 
-### Why This Platform?
+> **ECTP is a strategic initiative to modernize the entire technology landscape of Higher Education institutions** through a unified, governed platform that migrates infrastructure, integrates IT services, modernizes student systems, and automates DevOps — all while maintaining strict regulatory compliance.
+
+<table>
+<tr>
+<td width="50%">
+
+### 🎯 What ECTP Does
+
+| Capability | Description |
+|:-----------|:------------|
+| ☁️ **Migrates** | On-premises infrastructure to AWS cloud systematically |
+| 🔧 **Integrates** | ServiceNow ITSM with cloud-native operations |
+| 🎓 **Modernizes** | Ellucian Higher Ed systems through API-first architecture |
+| ⚡ **Automates** | DevOps processes across all organizational teams |
+| 📊 **Governs** | Costs, security, and compliance at enterprise scale |
+
+</td>
+<td width="50%">
+
+### 💡 Why This Platform?
 
 Higher Education institutions face unique challenges:
-- Legacy systems (often 15-20+ years old) running critical student operations
-- Regulatory requirements (FERPA, HIPAA, ADA) demanding strict data governance
-- Budget constraints requiring cost optimization and transparent governance
-- Growing cybersecurity threats targeting educational institutions
-- Need for rapid innovation while maintaining stability
 
-ECTP addresses all these challenges through a single, cohesive platform rather than fragmented point solutions.
+- 🔴 Legacy systems **15-20+ years old** running critical operations
+- 🔴 Regulatory requirements (**FERPA, HIPAA, ADA**) demanding strict governance
+- 🟡 Budget constraints requiring **cost optimization**
+- 🟡 Growing **cybersecurity threats** targeting education
+- 🟢 Need for **rapid innovation** while maintaining stability
 
-### Key Metrics (Target)
+</td>
+</tr>
+</table>
 
-| Metric | Current State | Target State |
-|--------|--------------|--------------|
-| Infrastructure Cost | $X/month (on-prem) | 30-40% reduction |
-| Deployment Frequency | Monthly | Daily/On-demand |
-| Mean Time to Recovery | 4-8 hours | < 30 minutes |
-| Security Incident Response | 24-48 hours | < 1 hour |
-| System Availability | 99.5% | 99.95% |
-| Manual IT Tasks | 70% manual | 85% automated |
+### 📊 Key Performance Targets
+
+<div align="center">
+
+| Metric | 🔴 Current State | 🟢 Target State | Improvement |
+|:-------|:----------------:|:---------------:|:-----------:|
+| Infrastructure Cost | $X/month (on-prem) | **30-40% reduction** | ⬇️ Significant |
+| Deployment Frequency | Monthly | **Daily / On-demand** | ⬆️ 30x faster |
+| Mean Time to Recovery | 4-8 hours | **< 30 minutes** | ⬆️ 16x faster |
+| Security Response | 24-48 hours | **< 1 hour** | ⬆️ 48x faster |
+| System Availability | 99.5% | **99.95%** | ⬆️ 4x fewer outages |
+| Manual IT Tasks | 70% manual | **85% automated** | ⬆️ Transformative |
+
+</div>
 
 ---
 
-## 2. Business Objectives
+<div align="center">
 
-### 2.1 Primary Objectives
+## 2 · Business Objectives
 
-1. **Digital Transformation** - Move from legacy on-premises infrastructure to cloud-native architecture
-2. **Operational Excellence** - Automate IT operations reducing manual effort by 85%
-3. **Cost Optimization** - Achieve 30-40% reduction in total infrastructure costs
-4. **Security Hardening** - Implement zero-trust security model with continuous compliance
-5. **Student Experience** - Improve system availability and performance for student-facing applications
+</div>
 
-### 2.2 Strategic Alignment
+### 🎯 Primary Objectives
+
+<table>
+<tr>
+<td width="20%" align="center">
+
+**☁️**
+#### Digital Transformation
+Move from legacy on-premises to cloud-native
+
+</td>
+<td width="20%" align="center">
+
+**⚡**
+#### Operational Excellence
+Automate IT operations, reduce manual effort by 85%
+
+</td>
+<td width="20%" align="center">
+
+**💰**
+#### Cost Optimization
+Achieve 30-40% reduction in infrastructure costs
+
+</td>
+<td width="20%" align="center">
+
+**🔒**
+#### Security Hardening
+Zero-trust security with continuous compliance
+
+</td>
+<td width="20%" align="center">
+
+**🎓**
+#### Student Experience
+Improve availability for student-facing apps
+
+</td>
+</tr>
+</table>
+
+### 📐 Strategic Alignment
 
 | Business Goal | ECTP Contribution |
-|--------------|-------------------|
-| Enrollment Growth | Scalable systems handling peak registration loads |
-| Research Computing | On-demand HPC resources via cloud |
-| Student Retention | Reliable, fast student information systems |
-| Financial Sustainability | Optimized IT spending with transparent governance |
-| Regulatory Compliance | Automated compliance monitoring and reporting |
-| Innovation | Rapid provisioning enabling experimentation |
+|:-------------|:------------------|
+| **Enrollment Growth** | Scalable systems handling peak registration loads |
+| **Research Computing** | On-demand HPC resources via cloud |
+| **Student Retention** | Reliable, fast student information systems |
+| **Financial Sustainability** | Optimized IT spending with transparent governance |
+| **Regulatory Compliance** | Automated compliance monitoring and reporting |
+| **Innovation** | Rapid provisioning enabling experimentation |
 
-### 2.3 Success Criteria
+### ✅ Success Criteria
 
-- All Tier-1 applications migrated to cloud within Phase 1
-- Zero FERPA/HIPAA violations during or after migration
-- ServiceNow integration providing unified ITSM across cloud and on-prem
-- 95% of infrastructure provisioning automated through IaC
-- Real-time cost dashboards accessible to all department heads
+> - All Tier-1 applications migrated to cloud within Phase 1
+> - Zero FERPA/HIPAA violations during or after migration
+> - ServiceNow integration providing unified ITSM across cloud and on-prem
+> - 95% of infrastructure provisioning automated through IaC
+> - Real-time cost dashboards accessible to all department heads
 
 ---
 
-## 3. Organization-Wide Impact
+<div align="center">
 
-### 3.1 Stakeholder Impact Matrix
+## 3 · Organization-Wide Impact
+
+</div>
+
+### 👥 Stakeholder Impact Matrix
 
 | Stakeholder | Impact | Benefit |
-|------------|--------|---------|
-| **CIO/CTO** | Strategic oversight | Unified technology governance |
-| **IT Operations** | Operational model shift | Automation, reduced toil |
-| **Security Team** | Enhanced tooling | Centralized security posture |
-| **Application Teams** | New deployment model | Self-service, faster releases |
-| **Finance** | Cost visibility | Real-time budget tracking |
-| **Faculty** | Improved systems | Better performance, availability |
-| **Students** | Better experience | Faster, more reliable services |
-| **Registrar** | System modernization | Integrated Ellucian platform |
-| **Research** | Computing resources | On-demand HPC, GPU clusters |
-| **Compliance** | Automated reporting | Continuous compliance monitoring |
+|:-----------|:------:|:--------|
+| **🏛️ CIO/CTO** | Strategic oversight | Unified technology governance |
+| **⚙️ IT Operations** | Operational model shift | Automation, reduced toil |
+| **🔒 Security Team** | Enhanced tooling | Centralized security posture |
+| **💻 Application Teams** | New deployment model | Self-service, faster releases |
+| **💰 Finance** | Cost visibility | Real-time budget tracking |
+| **📚 Faculty** | Improved systems | Better performance, availability |
+| **🎓 Students** | Better experience | Faster, more reliable services |
+| **📋 Registrar** | System modernization | Integrated Ellucian platform |
+| **🔬 Research** | Computing resources | On-demand HPC, GPU clusters |
+| **📊 Compliance** | Automated reporting | Continuous compliance monitoring |
 
-### 3.2 Organizational Change Management
+### 🔄 Organizational Change Management
 
-- **Training Program:** Role-based training for all IT staff
-- **Communication Plan:** Monthly stakeholder updates, weekly team syncs
-- **Support Model:** Tiered support with dedicated cloud CoE (Center of Excellence)
-- **Knowledge Base:** Comprehensive documentation, runbooks, and video guides
+<table>
+<tr>
+<td width="25%" align="center">
+
+**📖 Training**
+Role-based training for all IT staff
+
+</td>
+<td width="25%" align="center">
+
+**📢 Communication**
+Monthly stakeholder updates, weekly syncs
+
+</td>
+<td width="25%" align="center">
+
+**🛟 Support**
+Tiered support with Cloud CoE
+
+</td>
+<td width="25%" align="center">
+
+**📚 Knowledge**
+Comprehensive docs, runbooks, videos
+
+</td>
+</tr>
+</table>
 
 ---
 
-## 4. Architecture Overview
+<div align="center">
 
-### 4.1 Architecture Principles
+## 4 · Architecture Overview
+
+</div>
+
+### 🧭 Architecture Principles
 
 | Principle | Description |
-|-----------|------------|
-| **Cloud-Native** | Design for cloud from the ground up, not lift-and-shift |
-| **Secure by Design** | Security integrated at every layer, not bolted on |
-| **Automation-First** | Everything that can be automated, must be automated |
-| **API-First** | All integrations through well-defined APIs |
-| **Governance-Enabled** | Built-in cost, security, and compliance governance |
-| **Observable** | Complete visibility into all system components |
-| **Resilient** | Design for failure, implement self-healing |
-| **Vendor-Neutral** | Avoid vendor lock-in where possible |
-| **Modular** | Loosely coupled services, independently deployable |
-| **Scalable** | Horizontal scaling to handle enrollment surges |
+|:----------|:------------|
+| ☁️ **Cloud-Native** | Design for cloud from the ground up, not lift-and-shift |
+| 🔒 **Secure by Design** | Security integrated at every layer, not bolted on |
+| ⚡ **Automation-First** | Everything that can be automated, must be automated |
+| 🔌 **API-First** | All integrations through well-defined APIs |
+| 📊 **Governance-Enabled** | Built-in cost, security, and compliance governance |
+| 👁️ **Observable** | Complete visibility into all system components |
+| 🔄 **Resilient** | Design for failure, implement self-healing |
+| 🌐 **Vendor-Neutral** | Avoid vendor lock-in where possible |
+| 🧩 **Modular** | Loosely coupled services, independently deployable |
+| 📈 **Scalable** | Horizontal scaling to handle enrollment surges |
 
-### 4.2 High-Level Architecture Diagram
-
-```
-┌──────────────────────────────────────────────────────────────────────────────┐
-│                            EXTERNAL USERS                                    │
-│         Students │ Faculty │ Staff │ Administrators │ External Partners       │
-└────────────────────────────────┬─────────────────────────────────────────────┘
-                                 │
-                    ┌────────────▼────────────┐
-                    │   AWS CloudFront CDN    │
-                    │   + WAF + Shield        │
-                    └────────────┬────────────┘
-                                 │
-                    ┌────────────▼────────────┐
-                    │   Application Load      │
-                    │   Balancer (ALB)         │
-                    └────────────┬────────────┘
-                                 │
-                    ┌────────────▼────────────┐
-                    │   API Gateway           │
-                    │   (Kong / AWS API GW)   │
-                    │   Rate Limiting │ Auth   │
-                    └────────────┬────────────┘
-                                 │
-         ┌───────────────────────┼───────────────────────┐
-         │                       │                       │
-┌────────▼────────┐   ┌─────────▼────────┐   ┌─────────▼────────┐
-│ CLOUD MIGRATION │   │   SERVICENOW     │   │   ELLUCIAN       │
-│ SERVICE         │   │   INTEGRATION    │   │   INTEGRATION    │
-│                 │   │                  │   │                  │
-│ • Discovery     │   │ • Incident Mgmt  │   │ • Banner API     │
-│ • Assessment    │   │ • Change Mgmt    │   │ • Ethos Platform │
-│ • Migration     │   │ • CMDB Sync      │   │ • Student Data   │
-│ • Validation    │   │ • Automation     │   │ • Enrollment     │
-│ • Optimization  │   │ • SLA Tracking   │   │ • Financial Aid  │
-└────────┬────────┘   └─────────┬────────┘   └─────────┬────────┘
-         │                       │                       │
-┌────────▼───────────────────────▼───────────────────────▼────────┐
-│                    CORE SERVICES LAYER                           │
-│                                                                  │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐           │
-│  │ Config   │ │ Logging  │ │ Auth &   │ │ Event    │           │
-│  │ Manager  │ │ Service  │ │ Identity │ │ Bus      │           │
-│  └──────────┘ └──────────┘ └──────────┘ └──────────┘           │
-│  ┌──────────┐ ┌──────────┐ ┌──────────┐ ┌──────────┐           │
-│  │ Cost     │ │ Monitor  │ │ Audit    │ │ Workflow │           │
-│  │ Govern.  │ │ Service  │ │ Logger   │ │ Engine   │           │
-│  └──────────┘ └──────────┘ └──────────┘ └──────────┘           │
-└────────┬───────────────────────┬───────────────────────┬────────┘
-         │                       │                       │
-┌────────▼────────┐   ┌─────────▼────────┐   ┌─────────▼────────┐
-│ DATA LAYER      │   │ MESSAGING LAYER  │   │ STORAGE LAYER    │
-│                 │   │                  │   │                  │
-│ • RDS (PgSQL)   │   │ • SQS Queues     │   │ • S3 Buckets     │
-│ • DynamoDB      │   │ • SNS Topics     │   │ • EFS/EBS        │
-│ • ElastiCache   │   │ • EventBridge    │   │ • Glacier         │
-│ • DocumentDB    │   │ • Step Functions │   │ • Backup Vault   │
-└─────────────────┘   └──────────────────┘   └──────────────────┘
-         │                       │                       │
-┌────────▼───────────────────────▼───────────────────────▼────────┐
-│                 INFRASTRUCTURE LAYER (AWS)                       │
-│                                                                  │
-│  VPC │ Subnets │ Security Groups │ NACLs │ Transit Gateway       │
-│  ECS/EKS │ EC2 │ Lambda │ Direct Connect │ Route53               │
-│  IAM │ KMS │ Secrets Manager │ CloudTrail │ GuardDuty            │
-│  CloudWatch │ X-Ray │ Config │ Systems Manager                   │
-└─────────────────────────────────────────────────────────────────┘
-```
-
----
-
-## 5. Logical Architecture
-
-### 5.1 Service Decomposition
-
-The platform follows a modular service-oriented architecture with clear boundaries:
+### 🏗️ High-Level Architecture Diagram
 
 ```
-┌─────────────────────────────────────────────────────┐
-│                 PRESENTATION LAYER                   │
-│  Admin Portal │ API Documentation │ Dashboards       │
-└──────────────────────┬──────────────────────────────┘
-                       │
-┌──────────────────────▼──────────────────────────────┐
-│                   API LAYER                          │
-│  REST APIs │ GraphQL │ WebSocket │ gRPC              │
-│  Authentication │ Rate Limiting │ Versioning         │
-└──────────────────────┬──────────────────────────────┘
-                       │
-┌──────────────────────▼──────────────────────────────┐
-│               BUSINESS LOGIC LAYER                   │
-│                                                      │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐ │
-│  │ Migration   │  │ Integration │  │ Governance  │ │
-│  │ Orchestrator│  │ Hub         │  │ Engine      │ │
-│  └─────────────┘  └─────────────┘  └─────────────┘ │
-│  ┌─────────────┐  ┌─────────────┐  ┌─────────────┐ │
-│  │ Automation  │  │ Cost        │  │ Compliance  │ │
-│  │ Engine      │  │ Optimizer   │  │ Manager     │ │
-│  └─────────────┘  └─────────────┘  └─────────────┘ │
-└──────────────────────┬──────────────────────────────┘
-                       │
-┌──────────────────────▼──────────────────────────────┐
-│               DATA ACCESS LAYER                      │
-│  ORM │ Connection Pooling │ Caching │ Event Sourcing │
-└──────────────────────┬──────────────────────────────┘
-                       │
-┌──────────────────────▼──────────────────────────────┐
-│               INFRASTRUCTURE LAYER                   │
-│  Compute │ Storage │ Network │ Security │ Monitoring │
-└─────────────────────────────────────────────────────┘
-```
-
-### 5.2 Domain Model
-
-```
-┌─────────────────────────────────────────────────────────────┐
-│                    ECTP DOMAIN MODEL                         │
-│                                                              │
-│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐  │
-│  │  Workload    │───▶│  Migration   │───▶│  Cloud       │  │
-│  │  Discovery   │    │  Plan        │    │  Resource    │  │
-│  └──────────────┘    └──────────────┘    └──────────────┘  │
-│         │                    │                    │          │
-│         ▼                    ▼                    ▼          │
-│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐  │
-│  │  Assessment  │    │  Service     │    │  Cost        │  │
-│  │  Report      │    │  Ticket      │    │  Record      │  │
-│  └──────────────┘    └──────────────┘    └──────────────┘  │
-│         │                    │                    │          │
-│         ▼                    ▼                    ▼          │
-│  ┌──────────────┐    ┌──────────────┐    ┌──────────────┐  │
-│  │  Compliance  │    │  Audit       │    │  Alert       │  │
-│  │  Check       │    │  Log         │    │  Rule        │  │
-│  └──────────────┘    └──────────────┘    └──────────────┘  │
-└─────────────────────────────────────────────────────────────┘
+┌──────────────────────────────────────────────────────────────────────────────────┐
+│                                EXTERNAL USERS                                     │
+│           Students  │  Faculty  │  Staff  │  Administrators  │  Partners          │
+└────────────────────────────────────┬─────────────────────────────────────────────┘
+                                     │
+                        ┌────────────▼────────────┐
+                        │   🛡️  AWS CloudFront     │
+                        │   CDN + WAF + Shield     │
+                        │   DDoS + Geo-blocking    │
+                        └────────────┬────────────┘
+                                     │
+                        ┌────────────▼────────────┐
+                        │   ⚖️  Application Load   │
+                        │   Balancer (ALB)         │
+                        │   HTTPS + TLS 1.3        │
+                        └────────────┬────────────┘
+                                     │
+                        ┌────────────▼────────────┐
+                        │   🔑  API Gateway        │
+                        │   Rate Limiting │ Auth   │
+                        │   Versioning │ Routing   │
+                        └────────────┬────────────┘
+                                     │
+           ┌─────────────────────────┼─────────────────────────┐
+           │                         │                         │
+  ┌────────▼─────────┐    ┌─────────▼─────────┐    ┌─────────▼─────────┐
+  │ ☁️ CLOUD          │    │ 🔧 SERVICENOW     │    │ 🎓 ELLUCIAN       │
+  │ MIGRATION         │    │ INTEGRATION       │    │ INTEGRATION       │
+  │                   │    │                   │    │                   │
+  │ • Discovery       │    │ • Incident Mgmt   │    │ • Banner API      │
+  │ • Assessment      │    │ • Change Mgmt     │    │ • Ethos Platform  │
+  │ • Migration       │    │ • CMDB Sync       │    │ • Student Data    │
+  │ • Validation      │    │ • Automation       │    │ • Enrollment      │
+  │ • Optimization    │    │ • SLA Tracking    │    │ • Financial Aid   │
+  └────────┬─────────┘    └─────────┬─────────┘    └─────────┬─────────┘
+           │                         │                         │
+  ┌────────▼─────────────────────────▼─────────────────────────▼─────────┐
+  │                       ⚙️ CORE SERVICES LAYER                          │
+  │                                                                       │
+  │  ┌───────────┐  ┌───────────┐  ┌───────────┐  ┌───────────┐         │
+  │  │  Config   │  │ Logging   │  │  Auth &   │  │  Event    │         │
+  │  │  Manager  │  │ Service   │  │ Identity  │  │   Bus     │         │
+  │  └───────────┘  └───────────┘  └───────────┘  └───────────┘         │
+  │  ┌───────────┐  ┌───────────┐  ┌───────────┐  ┌───────────┐         │
+  │  │   Cost    │  │ Monitor   │  │  Audit    │  │ Workflow  │         │
+  │  │ Governance│  │ Service   │  │  Logger   │  │  Engine   │         │
+  │  └───────────┘  └───────────┘  └───────────┘  └───────────┘         │
+  └────────┬─────────────────────────┬─────────────────────────┬─────────┘
+           │                         │                         │
+  ┌────────▼─────────┐    ┌─────────▼─────────┐    ┌─────────▼─────────┐
+  │ 💾 DATA LAYER    │    │ 📨 MESSAGING      │    │ 📦 STORAGE        │
+  │                   │    │                   │    │                   │
+  │ • RDS (PgSQL)     │    │ • SQS Queues      │    │ • S3 Buckets      │
+  │ • DynamoDB        │    │ • SNS Topics      │    │ • EFS / EBS       │
+  │ • ElastiCache     │    │ • EventBridge     │    │ • Glacier          │
+  │ • DocumentDB      │    │ • Step Functions  │    │ • Backup Vault    │
+  └───────────────────┘    └───────────────────┘    └───────────────────┘
+           │                         │                         │
+  ┌────────▼─────────────────────────▼─────────────────────────▼─────────┐
+  │                    🏗️ INFRASTRUCTURE LAYER (AWS)                      │
+  │                                                                       │
+  │  VPC │ Subnets │ Security Groups │ NACLs │ Transit Gateway            │
+  │  ECS/EKS │ EC2 │ Lambda │ Direct Connect │ Route53                    │
+  │  IAM │ KMS │ Secrets Manager │ CloudTrail │ GuardDuty                 │
+  │  CloudWatch │ X-Ray │ Config │ Systems Manager                        │
+  └───────────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 6. Physical Architecture
+<div align="center">
 
-### 6.1 AWS Multi-Account Strategy
+## 5 · Logical Architecture
 
-```
-┌─────────────────────────────────────────────────────────────┐
-│                 AWS ORGANIZATION                             │
-│                                                              │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │ Management Account                                   │    │
-│  │ • AWS Organizations │ Billing │ SSO │ CloudTrail     │    │
-│  └─────────────────────────────────────────────────────┘    │
-│                          │                                   │
-│        ┌─────────────────┼─────────────────┐                │
-│        │                 │                 │                │
-│  ┌─────▼─────┐    ┌─────▼─────┐    ┌─────▼─────┐          │
-│  │ Security  │    │ Shared    │    │ Log       │          │
-│  │ Account   │    │ Services  │    │ Archive   │          │
-│  │           │    │ Account   │    │ Account   │          │
-│  │ GuardDuty │    │ Transit GW│    │ CloudTrail│          │
-│  │ Security  │    │ DNS       │    │ VPC Flow  │          │
-│  │ Hub       │    │ Directory │    │ App Logs  │          │
-│  │ Inspector │    │ CI/CD     │    │           │          │
-│  └───────────┘    └───────────┘    └───────────┘          │
-│                          │                                   │
-│        ┌─────────────────┼─────────────────┐                │
-│        │                 │                 │                │
-│  ┌─────▼─────┐    ┌─────▼─────┐    ┌─────▼─────┐          │
-│  │ Dev       │    │ QA/UAT    │    │ Production │          │
-│  │ Account   │    │ Account   │    │ Account    │          │
-│  │           │    │           │    │            │          │
-│  │ Dev VPC   │    │ QA VPC    │    │ Prod VPC   │          │
-│  │ Dev ECS   │    │ UAT VPC   │    │ Prod ECS   │          │
-│  │ Dev RDS   │    │ Test RDS  │    │ Prod RDS   │          │
-│  └───────────┘    └───────────┘    └───────────┘          │
-└─────────────────────────────────────────────────────────────┘
-```
+</div>
 
-### 6.2 Network Architecture
+### 🧩 Service Decomposition
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    VPC: 10.0.0.0/16                          │
-│                                                              │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │ PUBLIC SUBNETS (10.0.1.0/24, 10.0.2.0/24)          │    │
-│  │ • ALB │ NAT Gateway │ Bastion (if needed)           │    │
-│  └──────────────────────┬──────────────────────────────┘    │
-│                          │                                   │
-│  ┌──────────────────────▼──────────────────────────────┐    │
-│  │ PRIVATE APP SUBNETS (10.0.10.0/24, 10.0.11.0/24)   │    │
-│  │ • ECS Tasks │ Lambda │ Application Servers           │    │
-│  └──────────────────────┬──────────────────────────────┘    │
-│                          │                                   │
-│  ┌──────────────────────▼──────────────────────────────┐    │
-│  │ PRIVATE DATA SUBNETS (10.0.20.0/24, 10.0.21.0/24)  │    │
-│  │ • RDS │ ElastiCache │ DocumentDB                     │    │
-│  └─────────────────────────────────────────────────────┘    │
-│                                                              │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │ ISOLATED SUBNETS (10.0.30.0/24, 10.0.31.0/24)      │    │
-│  │ • VPC Endpoints │ Internal Services                  │    │
-│  └─────────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────┘
-         │
-         │ Transit Gateway / VPC Peering
-         │
-┌────────▼────────────────────────────────────────────────────┐
-│              ON-PREMISES DATA CENTER                         │
-│  • Ellucian Banner/Colleague Servers                        │
-│  • ServiceNow Instance                                      │
-│  • Active Directory                                         │
-│  • Legacy Applications                                      │
-└─────────────────────────────────────────────────────────────┘
+  ┌─────────────────────────────────────────────────────────────┐
+  │                    🖥️ PRESENTATION LAYER                     │
+  │      Admin Portal  │  API Documentation  │  Dashboards       │
+  └────────────────────────────┬────────────────────────────────┘
+                               │
+  ┌────────────────────────────▼────────────────────────────────┐
+  │                      🔌 API LAYER                            │
+  │    REST APIs │ GraphQL │ WebSocket │ gRPC                    │
+  │    Authentication │ Rate Limiting │ Versioning               │
+  └────────────────────────────┬────────────────────────────────┘
+                               │
+  ┌────────────────────────────▼────────────────────────────────┐
+  │                 ⚙️ BUSINESS LOGIC LAYER                      │
+  │                                                              │
+  │   ┌──────────────┐  ┌──────────────┐  ┌──────────────┐     │
+  │   │  Migration   │  │ Integration  │  │  Governance  │     │
+  │   │ Orchestrator │  │     Hub      │  │    Engine    │     │
+  │   └──────────────┘  └──────────────┘  └──────────────┘     │
+  │   ┌──────────────┐  ┌──────────────┐  ┌──────────────┐     │
+  │   │  Automation  │  │    Cost      │  │  Compliance  │     │
+  │   │    Engine    │  │  Optimizer   │  │   Manager    │     │
+  │   └──────────────┘  └──────────────┘  └──────────────┘     │
+  └────────────────────────────┬────────────────────────────────┘
+                               │
+  ┌────────────────────────────▼────────────────────────────────┐
+  │                 💾 DATA ACCESS LAYER                          │
+  │    ORM │ Connection Pooling │ Caching │ Event Sourcing       │
+  └────────────────────────────┬────────────────────────────────┘
+                               │
+  ┌────────────────────────────▼────────────────────────────────┐
+  │                 🏗️ INFRASTRUCTURE LAYER                      │
+  │    Compute │ Storage │ Network │ Security │ Monitoring       │
+  └─────────────────────────────────────────────────────────────┘
+```
+
+### 📦 Domain Model
+
+```
+  ┌─────────────────────────────────────────────────────────────────┐
+  │                      ECTP DOMAIN MODEL                           │
+  │                                                                  │
+  │   ┌──────────────┐     ┌──────────────┐     ┌──────────────┐   │
+  │   │  Workload    │────▶│  Migration   │────▶│    Cloud     │   │
+  │   │  Discovery   │     │    Plan      │     │   Resource   │   │
+  │   └──────┬───────┘     └──────┬───────┘     └──────┬───────┘   │
+  │          │                    │                     │            │
+  │          ▼                    ▼                     ▼            │
+  │   ┌──────────────┐     ┌──────────────┐     ┌──────────────┐   │
+  │   │  Assessment  │     │   Service    │     │    Cost      │   │
+  │   │   Report     │     │   Ticket     │     │   Record     │   │
+  │   └──────┬───────┘     └──────┬───────┘     └──────┬───────┘   │
+  │          │                    │                     │            │
+  │          ▼                    ▼                     ▼            │
+  │   ┌──────────────┐     ┌──────────────┐     ┌──────────────┐   │
+  │   │  Compliance  │     │    Audit     │     │    Alert     │   │
+  │   │   Check      │     │     Log      │     │    Rule      │   │
+  │   └──────────────┘     └──────────────┘     └──────────────┘   │
+  └─────────────────────────────────────────────────────────────────┘
 ```
 
 ---
 
-## 7. Integration Points
+<div align="center">
 
-### 7.1 Integration Architecture
+## 6 · Physical Architecture
+
+</div>
+
+### 🏢 AWS Multi-Account Strategy
 
 ```
-┌─────────┐     REST/HTTPS      ┌────────────┐
-│  ECTP   │ ◄─────────────────▶ │   AWS      │
-│  Core   │                     │  Services  │
-└────┬────┘                     └────────────┘
-     │
-     │  REST/HTTPS + OAuth2
-     ├────────────────────────▶ ┌────────────┐
-     │                          │ ServiceNow │
-     │                          │   ITSM     │
-     │                          └────────────┘
-     │
-     │  REST/Ethos API
-     ├────────────────────────▶ ┌────────────┐
-     │                          │ Ellucian   │
-     │                          │ Banner     │
-     │                          └────────────┘
-     │
-     │  SAML 2.0 / OIDC
-     ├────────────────────────▶ ┌────────────┐
-     │                          │  Identity  │
-     │                          │  Provider  │
-     │                          └────────────┘
-     │
-     │  SMTP / Webhook
-     └────────────────────────▶ ┌────────────┐
-                                │ Notification│
-                                │  Systems   │
-                                └────────────┘
+  ┌───────────────────────────────────────────────────────────────────┐
+  │                      AWS ORGANIZATION                              │
+  │                                                                    │
+  │   ┌───────────────────────────────────────────────────────────┐   │
+  │   │  🏛️ Management Account                                    │   │
+  │   │  AWS Organizations │ Billing │ SSO │ CloudTrail            │   │
+  │   └────────────────────────────┬──────────────────────────────┘   │
+  │                                │                                   │
+  │          ┌─────────────────────┼─────────────────────┐            │
+  │          │                     │                     │            │
+  │   ┌──────▼──────┐      ┌──────▼──────┐      ┌──────▼──────┐     │
+  │   │ 🔒 Security │      │ 🔗 Shared   │      │ 📋 Log      │     │
+  │   │   Account   │      │  Services   │      │  Archive    │     │
+  │   │             │      │   Account   │      │  Account    │     │
+  │   │ GuardDuty   │      │ Transit GW  │      │ CloudTrail  │     │
+  │   │ Security Hub│      │ DNS / CIDR  │      │ VPC Flow    │     │
+  │   │ Inspector   │      │ CI/CD       │      │ App Logs    │     │
+  │   └─────────────┘      └─────────────┘      └─────────────┘     │
+  │                                │                                   │
+  │          ┌─────────────────────┼─────────────────────┐            │
+  │          │                     │                     │            │
+  │   ┌──────▼──────┐      ┌──────▼──────┐      ┌──────▼──────┐     │
+  │   │ 🧪 Dev      │      │ 🧪 QA/UAT  │      │ 🚀 Prod     │     │
+  │   │   Account   │      │   Account   │      │   Account   │     │
+  │   │             │      │             │      │             │     │
+  │   │ Dev VPC     │      │ QA VPC      │      │ Prod VPC    │     │
+  │   │ Dev ECS     │      │ UAT VPC     │      │ Prod ECS    │     │
+  │   │ Dev RDS     │      │ Test RDS    │      │ Prod RDS    │     │
+  │   └─────────────┘      └─────────────┘      └─────────────┘     │
+  └───────────────────────────────────────────────────────────────────┘
 ```
 
-### 7.2 Integration Matrix
+### 🌐 Network Architecture
 
-| Source System | Target System | Protocol | Auth Method | Data Flow | Frequency |
-|--------------|---------------|----------|-------------|-----------|-----------|
-| ECTP | AWS Services | AWS SDK/REST | IAM Roles | Bidirectional | Real-time |
-| ECTP | ServiceNow | REST API | OAuth 2.0 | Bidirectional | Real-time |
-| ECTP | Ellucian Banner | Ethos API | API Key + OAuth | Read/Write | Near real-time |
-| ECTP | Active Directory | LDAP/SAML | Service Account | Read | On-demand |
-| ECTP | Notification | SMTP/Webhook | API Key | Outbound | Event-driven |
-| AWS | ECTP | EventBridge | IAM | Inbound | Event-driven |
-| ServiceNow | ECTP | Webhook | HMAC | Inbound | Event-driven |
+```
+  ┌───────────────────────────────────────────────────────────────────┐
+  │                       VPC: 10.0.0.0/16                             │
+  │                                                                    │
+  │   ┌───────────────────────────────────────────────────────────┐   │
+  │   │ 🌐 PUBLIC SUBNETS (10.0.1.0/24, 10.0.2.0/24)             │   │
+  │   │ ALB │ NAT Gateway │ Bastion (if needed)                    │   │
+  │   └──────────────────────────┬────────────────────────────────┘   │
+  │                              │                                     │
+  │   ┌──────────────────────────▼────────────────────────────────┐   │
+  │   │ 🔵 PRIVATE APP SUBNETS (10.0.10.0/24, 10.0.11.0/24)      │   │
+  │   │ ECS Tasks │ Lambda │ Application Servers                    │   │
+  │   └──────────────────────────┬────────────────────────────────┘   │
+  │                              │                                     │
+  │   ┌──────────────────────────▼────────────────────────────────┐   │
+  │   │ 🟠 PRIVATE DATA SUBNETS (10.0.20.0/24, 10.0.21.0/24)     │   │
+  │   │ RDS │ ElastiCache │ DocumentDB                              │   │
+  │   └───────────────────────────────────────────────────────────┘   │
+  │                                                                    │
+  │   ┌───────────────────────────────────────────────────────────┐   │
+  │   │ 🔴 ISOLATED SUBNETS (10.0.30.0/24, 10.0.31.0/24)         │   │
+  │   │ VPC Endpoints │ Internal Services (no internet access)      │   │
+  │   └───────────────────────────────────────────────────────────┘   │
+  └────────────┬──────────────────────────────────────────────────────┘
+               │
+               │ Transit Gateway / VPC Peering / VPN
+               │
+  ┌────────────▼──────────────────────────────────────────────────────┐
+  │                    ON-PREMISES DATA CENTER                         │
+  │  Ellucian Banner/Colleague │ ServiceNow │ Active Directory        │
+  └───────────────────────────────────────────────────────────────────┘
+```
 
-### 7.3 AWS Service Integration Details
+---
+
+<div align="center">
+
+## 7 · Integration Points
+
+</div>
+
+### 🔗 Integration Architecture
+
+```
+                                   ┌────────────────┐
+                ┌─────────────────▶│   AWS Services  │
+                │   REST / SDK     │   (Native)      │
+                │                  └────────────────┘
+                │
+  ┌─────────────┤                  ┌────────────────┐
+  │    ECTP     ├─────────────────▶│   ServiceNow   │
+  │    Core     │  REST + OAuth2   │   ITSM         │
+  │   Platform  │                  └────────────────┘
+  │             │
+  │             ├─────────────────▶┌────────────────┐
+  │             │  REST / Ethos    │   Ellucian     │
+  │             │                  │   Banner       │
+  │             │                  └────────────────┘
+  │             │
+  │             ├─────────────────▶┌────────────────┐
+  │             │  SAML / OIDC     │   Identity     │
+  │             │                  │   Provider     │
+  │             │                  └────────────────┘
+  │             │
+  └─────────────┤                  ┌────────────────┐
+                └─────────────────▶│  Notification  │
+                   SMTP / Webhook  │   Systems      │
+                                   └────────────────┘
+```
+
+### 📋 Integration Matrix
+
+| Source | Target | Protocol | Auth | Data Flow | Frequency |
+|:-------|:-------|:---------|:-----|:----------|:----------|
+| ECTP | **AWS Services** | AWS SDK / REST | IAM Roles | Bidirectional | Real-time |
+| ECTP | **ServiceNow** | REST API | OAuth 2.0 | Bidirectional | Real-time |
+| ECTP | **Ellucian Banner** | Ethos API | API Key + OAuth | Read/Write | Near real-time |
+| ECTP | **Active Directory** | LDAP / SAML | Service Account | Read | On-demand |
+| ECTP | **Notifications** | SMTP / Webhook | API Key | Outbound | Event-driven |
+| AWS | **ECTP** | EventBridge | IAM | Inbound | Event-driven |
+| ServiceNow | **ECTP** | Webhook | HMAC | Inbound | Event-driven |
+
+### ☁️ AWS Service Integration
+
+<details>
+<summary><b>Click to expand full AWS service catalog</b></summary>
 
 | AWS Service | Purpose | Integration Pattern |
-|-------------|---------|-------------------|
+|:------------|:--------|:-------------------|
 | **EC2/ECS** | Compute | Direct SDK, Terraform provisioned |
 | **RDS** | Database | Connection pooling, IAM auth |
 | **S3** | Object Storage | Pre-signed URLs, server-side encryption |
@@ -429,164 +555,173 @@ The platform follows a modular service-oriented architecture with clear boundari
 | **Step Functions** | Orchestration | Complex workflow coordination |
 | **EventBridge** | Events | Cross-service event routing |
 
+</details>
+
 ---
 
-## 8. Security Model
+<div align="center">
 
-### 8.1 Security Architecture
+## 8 · Security Model
+
+</div>
+
+### 🔒 Defense in Depth — Security Layers
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                    SECURITY LAYERS                           │
-│                                                              │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │ LAYER 1: PERIMETER                                   │    │
-│  │ • AWS WAF │ Shield Advanced │ CloudFront              │    │
-│  │ • DDoS Protection │ Geo-blocking │ Rate Limiting      │    │
-│  └─────────────────────────────────────────────────────┘    │
-│                                                              │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │ LAYER 2: NETWORK                                     │    │
-│  │ • VPC Isolation │ Security Groups │ NACLs             │    │
-│  │ • Private Subnets │ VPC Endpoints │ Transit Gateway   │    │
-│  └─────────────────────────────────────────────────────┘    │
-│                                                              │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │ LAYER 3: IDENTITY & ACCESS                           │    │
-│  │ • AWS IAM │ Cognito │ SAML Federation                 │    │
-│  │ • RBAC │ Least Privilege │ MFA │ SSO                   │    │
-│  └─────────────────────────────────────────────────────┘    │
-│                                                              │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │ LAYER 4: APPLICATION                                 │    │
-│  │ • Input Validation │ Output Encoding │ CSRF           │    │
-│  │ • API Authentication │ JWT Tokens │ Rate Limiting     │    │
-│  └─────────────────────────────────────────────────────┘    │
-│                                                              │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │ LAYER 5: DATA                                        │    │
-│  │ • AES-256 Encryption at Rest │ TLS 1.3 in Transit    │    │
-│  │ • KMS Key Management │ Field-level Encryption         │    │
-│  │ • Data Classification │ DLP Policies                  │    │
-│  └─────────────────────────────────────────────────────┘    │
-│                                                              │
-│  ┌─────────────────────────────────────────────────────┐    │
-│  │ LAYER 6: MONITORING & RESPONSE                       │    │
-│  │ • GuardDuty │ Security Hub │ CloudTrail               │    │
-│  │ • Inspector │ Macie │ Detective                       │    │
-│  │ • Automated Incident Response │ SIEM Integration      │    │
-│  └─────────────────────────────────────────────────────┘    │
-└─────────────────────────────────────────────────────────────┘
+  ┌─────────────────────────────────────────────────────────────────┐
+  │                                                                  │
+  │  ╔═══════════════════════════════════════════════════════════╗   │
+  │  ║  🔴 LAYER 1: PERIMETER DEFENSE                           ║   │
+  │  ║  AWS WAF │ Shield Advanced │ CloudFront │ Geo-blocking    ║   │
+  │  ╚═══════════════════════════════════════════════════════════╝   │
+  │                                                                  │
+  │  ╔═══════════════════════════════════════════════════════════╗   │
+  │  ║  🟠 LAYER 2: NETWORK SECURITY                            ║   │
+  │  ║  VPC Isolation │ Security Groups │ NACLs │ VPC Endpoints  ║   │
+  │  ╚═══════════════════════════════════════════════════════════╝   │
+  │                                                                  │
+  │  ╔═══════════════════════════════════════════════════════════╗   │
+  │  ║  🟡 LAYER 3: IDENTITY & ACCESS                           ║   │
+  │  ║  AWS IAM │ Cognito │ SAML │ RBAC │ MFA │ SSO             ║   │
+  │  ╚═══════════════════════════════════════════════════════════╝   │
+  │                                                                  │
+  │  ╔═══════════════════════════════════════════════════════════╗   │
+  │  ║  🔵 LAYER 4: APPLICATION SECURITY                        ║   │
+  │  ║  Input Validation │ Output Encoding │ CSRF │ JWT │ Rate   ║   │
+  │  ╚═══════════════════════════════════════════════════════════╝   │
+  │                                                                  │
+  │  ╔═══════════════════════════════════════════════════════════╗   │
+  │  ║  🟢 LAYER 5: DATA PROTECTION                             ║   │
+  │  ║  AES-256 at Rest │ TLS 1.3 in Transit │ KMS │ DLP        ║   │
+  │  ╚═══════════════════════════════════════════════════════════╝   │
+  │                                                                  │
+  │  ╔═══════════════════════════════════════════════════════════╗   │
+  │  ║  🟣 LAYER 6: MONITORING & RESPONSE                       ║   │
+  │  ║  GuardDuty │ Security Hub │ CloudTrail │ Inspector        ║   │
+  │  ╚═══════════════════════════════════════════════════════════╝   │
+  │                                                                  │
+  └─────────────────────────────────────────────────────────────────┘
 ```
 
-### 8.2 IAM & RBAC Model
+### 👤 IAM & RBAC Model
 
 | Role | Permissions | Scope |
-|------|------------|-------|
-| **Platform Admin** | Full platform access | All environments |
-| **Cloud Engineer** | Infrastructure management | Dev, QA, UAT |
-| **Developer** | Application deployment | Dev environment |
-| **Security Analyst** | Security monitoring, read-only | All environments |
-| **Cost Analyst** | Cost reports, budget management | All environments |
-| **ServiceNow Admin** | Integration configuration | Integration layer |
-| **Ellucian Admin** | Higher Ed integration | Integration layer |
-| **Auditor** | Read-only, audit logs | All environments |
-| **Department Head** | Cost reports for department | Department scope |
+|:-----|:-----------|:------|
+| 🔴 **Platform Admin** | Full platform access | All environments |
+| 🟠 **Cloud Engineer** | Infrastructure management | Dev, QA, UAT |
+| 🟡 **Developer** | Application deployment | Dev environment |
+| 🔵 **Security Analyst** | Security monitoring, read-only | All environments |
+| 🟢 **Cost Analyst** | Cost reports, budget management | All environments |
+| 🔧 **ServiceNow Admin** | Integration configuration | Integration layer |
+| 🎓 **Ellucian Admin** | Higher Ed integration | Integration layer |
+| 📋 **Auditor** | Read-only, audit logs | All environments |
+| 🏛️ **Department Head** | Cost reports for department | Department scope |
 
-### 8.3 Encryption Strategy
+### 🔐 Encryption Strategy
 
 | Data State | Method | Key Management |
-|-----------|--------|---------------|
+|:-----------|:-------|:---------------|
 | At Rest (S3) | SSE-KMS (AES-256) | AWS KMS with CMK |
 | At Rest (RDS) | TDE with KMS | AWS KMS with CMK |
 | At Rest (EBS) | EBS Encryption | AWS KMS with CMK |
 | In Transit | TLS 1.3 | ACM Certificates |
-| In Transit (VPN) | IPSec/IKEv2 | Pre-shared keys + certs |
+| In Transit (VPN) | IPSec / IKEv2 | Pre-shared keys + certs |
 | Secrets | Secrets Manager | Automatic rotation |
 | PII Fields | Field-level encryption | Application-managed KMS |
 
 ---
 
-## 9. Compliance Considerations
+<div align="center">
 
-### 9.1 Regulatory Landscape
+## 9 · Compliance Considerations
+
+</div>
+
+### 📜 Regulatory Landscape
 
 | Regulation | Applicability | Key Requirements |
-|-----------|---------------|-----------------|
-| **FERPA** | Student educational records | Access controls, audit logging, data minimization |
-| **HIPAA** | Student health data | Encryption, BAAs, access controls, breach notification |
-| **SOC 2** | Service organization controls | Security, availability, processing integrity |
-| **PCI DSS** | Payment card data | Network segmentation, encryption, access control |
-| **GLBA** | Financial information | Data protection, access controls |
-| **ADA/508** | Accessibility | Web content accessibility |
-| **State Privacy Laws** | Personal information | Varies by state |
+|:-----------|:-------------|:-----------------|
+| 🎓 **FERPA** | Student educational records | Access controls, audit logging, data minimization |
+| 🏥 **HIPAA** | Student health data | Encryption, BAAs, access controls, breach notification |
+| 🔒 **SOC 2** | Service organization controls | Security, availability, processing integrity |
+| 💳 **PCI DSS** | Payment card data | Network segmentation, encryption, access control |
+| 💰 **GLBA** | Financial information | Data protection, access controls |
+| ♿ **ADA/508** | Accessibility | Web content accessibility |
+| 📋 **State Privacy** | Personal information | Varies by state |
 
-### 9.2 Compliance Controls Mapping
+### 🗺️ FERPA Controls Mapping
 
 ```
-FERPA Requirements          → ECTP Controls
-─────────────────          ─────────────
-Access Control             → IAM + RBAC + MFA
-Audit Trail                → CloudTrail + Application Logging
-Data Minimization          → Data classification + retention policies
-Breach Notification        → GuardDuty + SNS alerts + runbooks
-Consent Management         → Application-level consent tracking
-Directory Information      → Configurable data exposure rules
+  FERPA Requirements            →    ECTP Controls
+  ═══════════════════           ═══════════════════
+  Access Control                →    IAM + RBAC + MFA
+  Audit Trail                   →    CloudTrail + Application Logging
+  Data Minimization             →    Data classification + retention policies
+  Breach Notification           →    GuardDuty + SNS alerts + runbooks
+  Consent Management            →    Application-level consent tracking
+  Directory Information         →    Configurable data exposure rules
 ```
 
-### 9.3 Continuous Compliance
+### 🔄 Continuous Compliance
 
-- **AWS Config Rules:** Automated compliance checks on infrastructure
-- **Security Hub:** Centralized compliance scoring and findings
-- **Custom Lambda:** Organization-specific compliance validators
-- **Audit Reports:** Automated monthly compliance reports
-- **Evidence Collection:** Automated artifact gathering for audits
+> **No more annual-only audits.** ECTP implements continuous compliance monitoring:
+
+- **AWS Config Rules** — Automated compliance checks on infrastructure
+- **Security Hub** — Centralized compliance scoring and findings
+- **Custom Lambda** — Organization-specific compliance validators
+- **Audit Reports** — Automated monthly compliance reports
+- **Evidence Collection** — Automated artifact gathering for audits
 
 ---
 
-## 10. Scalability Model
+<div align="center">
 
-### 10.1 Scaling Strategy
+## 10 · Scalability Model
+
+</div>
+
+### 📈 Scaling Strategy
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                   SCALING DIMENSIONS                         │
-│                                                              │
-│  HORIZONTAL SCALING          VERTICAL SCALING                │
-│  ┌─────────────────┐        ┌─────────────────┐            │
-│  │ ECS Auto-scaling │        │ RDS Instance    │            │
-│  │ (Task count)     │        │ Upgrade         │            │
-│  └─────────────────┘        └─────────────────┘            │
-│  ┌─────────────────┐        ┌─────────────────┐            │
-│  │ ALB Target Group │        │ ElastiCache     │            │
-│  │ Scaling          │        │ Node Size       │            │
-│  └─────────────────┘        └─────────────────┘            │
-│                                                              │
-│  EVENT-DRIVEN SCALING        SCHEDULED SCALING               │
-│  ┌─────────────────┐        ┌─────────────────┐            │
-│  │ Lambda Auto      │        │ Predictive      │            │
-│  │ (Concurrency)    │        │ (Enrollment     │            │
-│  └─────────────────┘        │  periods)       │            │
-│  ┌─────────────────┐        └─────────────────┘            │
-│  │ SQS-based        │                                       │
-│  │ (Queue depth)    │                                       │
-│  └─────────────────┘                                       │
-└─────────────────────────────────────────────────────────────┘
+  ┌─────────────────────────────────────────────────────────────────┐
+  │                    SCALING DIMENSIONS                             │
+  │                                                                  │
+  │  HORIZONTAL SCALING            VERTICAL SCALING                  │
+  │  ┌──────────────────┐         ┌──────────────────┐              │
+  │  │ ECS Auto-scaling  │         │ RDS Instance     │              │
+  │  │ (2 → 12 tasks)   │         │ Upgrade          │              │
+  │  └──────────────────┘         └──────────────────┘              │
+  │  ┌──────────────────┐         ┌──────────────────┐              │
+  │  │ ALB Target Group  │         │ ElastiCache      │              │
+  │  │ Scaling           │         │ Node Size        │              │
+  │  └──────────────────┘         └──────────────────┘              │
+  │                                                                  │
+  │  EVENT-DRIVEN SCALING          SCHEDULED SCALING                 │
+  │  ┌──────────────────┐         ┌──────────────────┐              │
+  │  │ Lambda Auto       │         │ Predictive       │              │
+  │  │ (Concurrency)     │         │ (Enrollment      │              │
+  │  └──────────────────┘         │  periods)        │              │
+  │  ┌──────────────────┐         └──────────────────┘              │
+  │  │ SQS-based         │                                          │
+  │  │ (Queue depth)     │                                          │
+  │  └──────────────────┘                                           │
+  └─────────────────────────────────────────────────────────────────┘
 ```
 
-### 10.2 Capacity Planning
+### 📊 Capacity Planning
 
 | Component | Baseline | Peak (Enrollment) | Scale Factor |
-|-----------|----------|-------------------|--------------|
-| API Servers | 3 tasks | 12 tasks | 4x |
-| Database | db.r6g.large | db.r6g.2xlarge | 2x (vertical) |
-| Cache | cache.r6g.large | cache.r6g.large | 2 nodes → 4 nodes |
-| Queue Workers | 2 tasks | 8 tasks | 4x |
-| Lambda | 100 concurrent | 1000 concurrent | 10x |
+|:----------|:---------|:-----------------|:------------:|
+| API Servers | 3 tasks | 12 tasks | **4x** |
+| Database | db.r6g.large | db.r6g.2xlarge | **2x** (vertical) |
+| Cache | cache.r6g.large | cache.r6g.large × 4 nodes | **2x** |
+| Queue Workers | 2 tasks | 8 tasks | **4x** |
+| Lambda | 100 concurrent | 1000 concurrent | **10x** |
 
-### 10.3 Multi-Tenant Scaling
+### 🏢 Multi-Tenant Architecture
 
-The platform supports multi-institution deployment:
+> The platform supports **multi-institution deployment**:
+
 - **Shared Infrastructure:** Common VPC, ALB, monitoring
 - **Isolated Data:** Separate databases per institution
 - **Configurable:** Per-tenant feature flags and limits
@@ -594,234 +729,289 @@ The platform supports multi-institution deployment:
 
 ---
 
-## 11. Monitoring & Observability
+<div align="center">
 
-### 11.1 Observability Stack
+## 11 · Monitoring & Observability
+
+</div>
+
+### 👁️ Three Pillars of Observability
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│                 OBSERVABILITY PILLARS                        │
-│                                                              │
-│  ┌──────────────┐  ┌──────────────┐  ┌──────────────┐      │
-│  │   METRICS    │  │    LOGS      │  │   TRACES     │      │
-│  │              │  │              │  │              │      │
-│  │ CloudWatch   │  │ CloudWatch   │  │ AWS X-Ray    │      │
-│  │ Metrics      │  │ Logs         │  │              │      │
-│  │              │  │              │  │ Distributed  │      │
-│  │ Custom       │  │ Structured   │  │ Tracing      │      │
-│  │ Metrics      │  │ JSON Logs    │  │              │      │
-│  │              │  │              │  │ Service Map  │      │
-│  │ Prometheus   │  │ Log          │  │              │      │
-│  │ (optional)   │  │ Aggregation  │  │ Latency      │      │
-│  │              │  │              │  │ Analysis     │      │
-│  └──────┬───────┘  └──────┬───────┘  └──────┬───────┘      │
-│         │                  │                  │              │
-│         └──────────────────┼──────────────────┘              │
-│                            │                                 │
-│                   ┌────────▼────────┐                        │
-│                   │   DASHBOARDS   │                        │
-│                   │   (Grafana /   │                        │
-│                   │   CloudWatch)  │                        │
-│                   └────────┬────────┘                        │
-│                            │                                 │
-│                   ┌────────▼────────┐                        │
-│                   │    ALERTING    │                        │
-│                   │  SNS │ PagerDuty│                        │
-│                   │  Slack │ Email  │                        │
-│                   └─────────────────┘                        │
-└─────────────────────────────────────────────────────────────┘
+  ┌─────────────────────────────────────────────────────────────────┐
+  │                   OBSERVABILITY STACK                             │
+  │                                                                  │
+  │  ┌───────────────┐   ┌───────────────┐   ┌───────────────┐     │
+  │  │  📊 METRICS   │   │  📋 LOGS      │   │  🔍 TRACES    │     │
+  │  │               │   │               │   │               │     │
+  │  │  CloudWatch   │   │  CloudWatch   │   │  AWS X-Ray    │     │
+  │  │  Metrics      │   │  Logs         │   │               │     │
+  │  │               │   │               │   │  Distributed  │     │
+  │  │  Custom       │   │  Structured   │   │  Tracing      │     │
+  │  │  Metrics      │   │  JSON Logs    │   │               │     │
+  │  │               │   │               │   │  Service Map  │     │
+  │  │  Prometheus   │   │  Log          │   │               │     │
+  │  │  (optional)   │   │  Aggregation  │   │  Latency      │     │
+  │  └───────┬───────┘   └───────┬───────┘   └───────┬───────┘     │
+  │          │                    │                    │              │
+  │          └────────────────────┼────────────────────┘              │
+  │                               │                                   │
+  │                   ┌───────────▼───────────┐                      │
+  │                   │    📊 DASHBOARDS      │                      │
+  │                   │  CloudWatch / Grafana  │                      │
+  │                   └───────────┬───────────┘                      │
+  │                               │                                   │
+  │                   ┌───────────▼───────────┐                      │
+  │                   │    🔔 ALERTING        │                      │
+  │                   │  SNS │ PagerDuty      │                      │
+  │                   │  Slack │ Email         │                      │
+  │                   └───────────────────────┘                      │
+  └─────────────────────────────────────────────────────────────────┘
 ```
 
-### 11.2 Key Metrics & SLAs
+### 📏 Key Metrics & SLAs
 
-| Metric | SLO Target | Alert Threshold | Response |
-|--------|-----------|----------------|----------|
-| API Availability | 99.95% | < 99.9% | P1 - Immediate |
-| API Latency (p99) | < 500ms | > 1s | P2 - 30 min |
-| Error Rate | < 0.1% | > 0.5% | P1 - Immediate |
-| Database CPU | < 70% | > 80% | P2 - 30 min |
-| Queue Depth | < 1000 | > 5000 | P2 - 30 min |
-| Failed Deployments | 0 | Any failure | P2 - 30 min |
-| Security Findings | 0 Critical | Any critical | P1 - Immediate |
-| Cost Anomaly | < 10% variance | > 20% variance | P3 - 4 hours |
+| Metric | SLO Target | 🚨 Alert Threshold | Response |
+|:-------|:----------|:-------------------|:---------|
+| API Availability | 99.95% | < 99.9% | 🔴 P1 — Immediate |
+| API Latency (p99) | < 500ms | > 1s | 🟠 P2 — 30 min |
+| Error Rate | < 0.1% | > 0.5% | 🔴 P1 — Immediate |
+| Database CPU | < 70% | > 80% | 🟠 P2 — 30 min |
+| Queue Depth | < 1000 | > 5000 | 🟠 P2 — 30 min |
+| Failed Deployments | 0 | Any failure | 🟠 P2 — 30 min |
+| Security Findings | 0 Critical | Any critical | 🔴 P1 — Immediate |
+| Cost Anomaly | < 10% variance | > 20% variance | 🟡 P3 — 4 hours |
 
 ---
 
-## 12. Cost Governance
+<div align="center">
 
-### 12.1 Cost Management Framework
+## 12 · Cost Governance
+
+</div>
+
+### 💰 Cost Management Framework
 
 ```
-┌─────────────────────────────────────────────────────────────┐
-│              COST GOVERNANCE FRAMEWORK                       │
-│                                                              │
-│  ┌──────────────────────────────────────────────────────┐   │
-│  │ VISIBILITY                                            │   │
-│  │ • AWS Cost Explorer │ Custom Dashboards               │   │
-│  │ • Per-department cost allocation                      │   │
-│  │ • Showback/Chargeback reports                         │   │
-│  └──────────────────────────────────────────────────────┘   │
-│                                                              │
-│  ┌──────────────────────────────────────────────────────┐   │
-│  │ OPTIMIZATION                                          │   │
-│  │ • Reserved Instances / Savings Plans                  │   │
-│  │ • Right-sizing recommendations                        │   │
-│  │ • Spot Instances for non-critical workloads           │   │
-│  │ • S3 Lifecycle policies                               │   │
-│  │ • Unused resource cleanup automation                  │   │
-│  └──────────────────────────────────────────────────────┘   │
-│                                                              │
-│  ┌──────────────────────────────────────────────────────┐   │
-│  │ GOVERNANCE                                            │   │
-│  │ • Tagging enforcement (mandatory tags)                │   │
-│  │ • Budget alerts (50%, 80%, 100% thresholds)           │   │
-│  │ • Service Control Policies (SCPs)                     │   │
-│  │ • Approved service catalog                            │   │
-│  │ • Monthly cost review meetings                        │   │
-│  └──────────────────────────────────────────────────────┘   │
-└─────────────────────────────────────────────────────────────┘
+  ┌─────────────────────────────────────────────────────────────────┐
+  │                  COST GOVERNANCE FRAMEWORK                       │
+  │                                                                  │
+  │  ┌──────────────────────────────────────────────────────────┐   │
+  │  │  👁️ VISIBILITY                                           │   │
+  │  │  • AWS Cost Explorer │ Custom Dashboards                  │   │
+  │  │  • Per-department cost allocation                         │   │
+  │  │  • Showback / Chargeback reports                          │   │
+  │  └──────────────────────────────────────────────────────────┘   │
+  │                                                                  │
+  │  ┌──────────────────────────────────────────────────────────┐   │
+  │  │  📉 OPTIMIZATION                                         │   │
+  │  │  • Reserved Instances / Savings Plans                     │   │
+  │  │  • Right-sizing recommendations                           │   │
+  │  │  • Spot Instances for non-critical workloads              │   │
+  │  │  • S3 Lifecycle policies                                  │   │
+  │  │  • Unused resource cleanup automation                     │   │
+  │  └──────────────────────────────────────────────────────────┘   │
+  │                                                                  │
+  │  ┌──────────────────────────────────────────────────────────┐   │
+  │  │  📋 GOVERNANCE                                           │   │
+  │  │  • Tagging enforcement (mandatory tags)                   │   │
+  │  │  • Budget alerts (50%, 80%, 100% thresholds)              │   │
+  │  │  • Service Control Policies (SCPs)                        │   │
+  │  │  • Approved service catalog                               │   │
+  │  │  • Monthly cost review meetings                           │   │
+  │  └──────────────────────────────────────────────────────────┘   │
+  └─────────────────────────────────────────────────────────────────┘
 ```
 
-### 12.2 Mandatory Tagging Policy
+### 🏷️ Mandatory Tagging Policy
 
 | Tag Key | Required | Example | Purpose |
-|---------|----------|---------|---------|
-| `Environment` | Yes | dev, qa, uat, prod | Environment identification |
-| `Project` | Yes | ECTP | Project tracking |
-| `Owner` | Yes | team-cloud-ops | Ownership |
-| `Department` | Yes | IT, Finance, Registrar | Cost allocation |
-| `CostCenter` | Yes | CC-12345 | Financial tracking |
-| `DataClassification` | Yes | public, internal, confidential | Security |
-| `ManagedBy` | Yes | terraform, manual | IaC tracking |
-| `Application` | Yes | migration-svc, api-gateway | Application identification |
+|:--------|:--------:|:--------|:--------|
+| `Environment` | ✅ | dev, qa, uat, prod | Environment identification |
+| `Project` | ✅ | ECTP | Project tracking |
+| `Owner` | ✅ | team-cloud-ops | Ownership |
+| `Department` | ✅ | IT, Finance, Registrar | Cost allocation |
+| `CostCenter` | ✅ | CC-12345 | Financial tracking |
+| `DataClassification` | ✅ | public, internal, confidential | Security |
+| `ManagedBy` | ✅ | terraform, manual | IaC tracking |
+| `Application` | ✅ | migration-svc, api-gateway | Application ID |
 
 ---
 
-## 13. Risk Assessment
+<div align="center">
 
-### 13.1 Risk Matrix
+## 13 · Risk Assessment
 
-| Risk ID | Risk Description | Likelihood | Impact | Severity | Mitigation |
-|---------|-----------------|-----------|--------|----------|-----------|
-| R-001 | Data breach during migration | Medium | Critical | High | Encrypted transfers, access controls, monitoring |
-| R-002 | FERPA compliance violation | Low | Critical | High | Automated compliance checks, training, audit logs |
-| R-003 | ServiceNow integration failure | Medium | High | High | Circuit breakers, fallback queues, monitoring |
-| R-004 | Ellucian API breaking changes | Medium | High | High | API versioning, contract testing, abstraction layer |
-| R-005 | Cost overrun | Medium | Medium | Medium | Budget alerts, auto-scaling limits, reserved capacity |
-| R-006 | Key personnel dependency | High | Medium | High | Cross-training, documentation, runbooks |
-| R-007 | AWS service outage | Low | High | Medium | Multi-AZ, disaster recovery, runbooks |
-| R-008 | Vendor lock-in | Medium | Medium | Medium | Abstraction layers, containerization, standard APIs |
-| R-009 | Scope creep | High | Medium | High | Change management, governance board |
-| R-010 | Performance degradation | Medium | High | High | Load testing, auto-scaling, performance monitoring |
+</div>
 
-### 13.2 Risk Mitigation Strategies
+### ⚠️ Risk Matrix
 
-- **Technical:** Circuit breakers, retries, fallback mechanisms, multi-AZ
-- **Process:** Change management board, risk review meetings, runbooks
-- **People:** Cross-training, documentation, knowledge transfer sessions
-- **Governance:** Budget controls, scope management, stakeholder reviews
+| ID | Risk | Likelihood | Impact | Severity | Mitigation |
+|:--:|:-----|:----------:|:------:|:--------:|:-----------|
+| R-001 | Data breach during migration | 🟡 Medium | 🔴 Critical | **HIGH** | Encrypted transfers, access controls, monitoring |
+| R-002 | FERPA compliance violation | 🟢 Low | 🔴 Critical | **HIGH** | Automated compliance checks, training, audit logs |
+| R-003 | ServiceNow integration failure | 🟡 Medium | 🟠 High | **HIGH** | Circuit breakers, fallback queues, monitoring |
+| R-004 | Ellucian API breaking changes | 🟡 Medium | 🟠 High | **HIGH** | API versioning, contract testing, abstraction layer |
+| R-005 | Cost overrun | 🟡 Medium | 🟡 Medium | **MEDIUM** | Budget alerts, auto-scaling limits, reserved capacity |
+| R-006 | Key personnel dependency | 🔴 High | 🟡 Medium | **HIGH** | Cross-training, documentation, runbooks |
+| R-007 | AWS service outage | 🟢 Low | 🟠 High | **MEDIUM** | Multi-AZ, disaster recovery, runbooks |
+| R-008 | Vendor lock-in | 🟡 Medium | 🟡 Medium | **MEDIUM** | Abstraction layers, containerization, standard APIs |
+| R-009 | Scope creep | 🔴 High | 🟡 Medium | **HIGH** | Change management, governance board |
+| R-010 | Performance degradation | 🟡 Medium | 🟠 High | **HIGH** | Load testing, auto-scaling, performance monitoring |
+
+### 🛡️ Mitigation Strategies
+
+<table>
+<tr>
+<td width="25%" valign="top">
+
+**🔧 Technical**
+- Circuit breakers & retries
+- Fallback mechanisms
+- Multi-AZ deployment
+- Auto-scaling
+
+</td>
+<td width="25%" valign="top">
+
+**📋 Process**
+- Change management board
+- Risk review meetings
+- Operational runbooks
+- Post-mortems
+
+</td>
+<td width="25%" valign="top">
+
+**👥 People**
+- Cross-training programs
+- Comprehensive documentation
+- Knowledge transfer sessions
+- Cloud CoE mentoring
+
+</td>
+<td width="25%" valign="top">
+
+**🏛️ Governance**
+- Budget controls
+- Scope management
+- Stakeholder reviews
+- ADR process
+
+</td>
+</tr>
+</table>
 
 ---
 
-## 14. Data Architecture
+<div align="center">
 
-### 14.1 Data Flow Diagram
+## 14 · Data Architecture
+
+</div>
+
+### 📊 Data Flow Diagram
 
 ```
-┌──────────┐     ┌──────────┐     ┌──────────┐
-│ Ellucian │────▶│  ETL /   │────▶│ ECTP     │
-│ Banner   │     │  Sync    │     │ Database │
-└──────────┘     │ Service  │     │ (RDS)    │
-                 └──────────┘     └────┬─────┘
-┌──────────┐          │                │
-│ServiceNow│──────────┘                │
-│  CMDB    │                     ┌─────▼─────┐
-└──────────┘                     │ Analytics │
-                                 │ (Redshift/│
-┌──────────┐                     │ Athena)   │
-│  AWS     │────────────────────▶└───────────┘
-│ Resource │
-│ Metadata │
-└──────────┘
+  ┌──────────────┐      ┌──────────────┐      ┌──────────────┐
+  │  🎓 Ellucian │─────▶│   ETL /      │─────▶│  💾 ECTP     │
+  │   Banner     │      │   Sync       │      │   Database   │
+  └──────────────┘      │   Service    │      │   (RDS)      │
+                        └──────────────┘      └──────┬───────┘
+  ┌──────────────┐            │                      │
+  │ 🔧 ServiceNow│────────────┘                      │
+  │   CMDB       │                            ┌──────▼───────┐
+  └──────────────┘                            │ 📊 Analytics │
+                                              │  (Redshift / │
+  ┌──────────────┐                            │   Athena)    │
+  │ ☁️ AWS       │───────────────────────────▶└──────────────┘
+  │  Resource    │
+  │  Metadata    │
+  └──────────────┘
 ```
 
-### 14.2 Data Classification
+### 📁 Data Classification
 
 | Classification | Description | Storage | Encryption | Access |
-|---------------|-------------|---------|------------|--------|
-| **Public** | Marketing, general info | S3 | SSE-S3 | Open |
-| **Internal** | Operational data | RDS/S3 | SSE-KMS | Authenticated |
-| **Confidential** | Student PII, financial | RDS | SSE-KMS + field-level | RBAC + MFA |
-| **Restricted** | SSN, health records | RDS (isolated) | SSE-KMS + field-level | MFA + audit |
+|:--------------|:------------|:--------|:-----------|:-------|
+| 🟢 **Public** | Marketing, general info | S3 | SSE-S3 | Open |
+| 🔵 **Internal** | Operational data | RDS / S3 | SSE-KMS | Authenticated |
+| 🟠 **Confidential** | Student PII, financial | RDS | SSE-KMS + field | RBAC + MFA |
+| 🔴 **Restricted** | SSN, health records | RDS (isolated) | SSE-KMS + field | MFA + audit |
 
 ---
 
-## 15. Disaster Recovery
+<div align="center">
 
-### 15.1 DR Strategy
+## 15 · Disaster Recovery
+
+</div>
+
+### 🔄 DR Strategy by Tier
 
 | Tier | RTO | RPO | Strategy | Components |
-|------|-----|-----|----------|-----------|
-| Tier 1 | 15 min | 0 | Multi-AZ Active-Active | API, Database, Cache |
-| Tier 2 | 1 hour | 15 min | Warm Standby | Integration services |
-| Tier 3 | 4 hours | 1 hour | Pilot Light | Reporting, analytics |
-| Tier 4 | 24 hours | 24 hours | Backup & Restore | Archives, non-critical |
+|:----:|:---:|:---:|:---------|:-----------|
+| **Tier 1** | 15 min | 0 | Multi-AZ Active-Active | API, Database, Cache |
+| **Tier 2** | 1 hour | 15 min | Warm Standby | Integration services |
+| **Tier 3** | 4 hours | 1 hour | Pilot Light | Reporting, analytics |
+| **Tier 4** | 24 hours | 24 hours | Backup & Restore | Archives, non-critical |
 
-### 15.2 Backup Strategy
+### 💾 Backup Strategy
 
-- **RDS:** Automated daily snapshots, 35-day retention, cross-region replication
-- **S3:** Versioning enabled, cross-region replication, lifecycle policies
-- **DynamoDB:** Point-in-time recovery enabled, on-demand backups
-- **EBS:** Automated snapshots via AWS Backup, 30-day retention
-- **Configuration:** All IaC in Git, secrets in Secrets Manager with rotation
+| Resource | Method | Retention | Cross-Region |
+|:---------|:-------|:----------|:------------:|
+| **RDS** | Automated daily snapshots | 35 days | ✅ us-west-2 |
+| **S3** | Versioning + replication | Lifecycle-managed | ✅ us-west-2 |
+| **DynamoDB** | Point-in-time recovery | 35 days | ✅ |
+| **EBS** | AWS Backup snapshots | 30 days | ✅ |
+| **Configuration** | Git + Secrets Manager | Unlimited | ✅ |
+
+---
+
+<div align="center">
+
+## 16 · Future Roadmap
+
+</div>
+
+### 🗺️ Phased Delivery Plan
+
+```
+  Phase 1                Phase 2                Phase 3                Phase 4
+  FOUNDATION             INTEGRATION            AUTOMATION             OPTIMIZATION
+  (Months 1-3)           (Months 4-6)           (Months 7-9)          (Months 10-12)
+  ┌──────────┐           ┌──────────┐           ┌──────────┐          ┌──────────┐
+  │ ▪ Infra  │           │ ▪ SNOW   │           │ ▪ Auto   │          │ ▪ AI/ML  │
+  │ ▪ IAM    │──────────▶│ ▪ Ethos  │──────────▶│ ▪ Portal │─────────▶│ ▪ Predict│
+  │ ▪ CI/CD  │           │ ▪ Migrate│           │ ▪ Prod   │          │ ▪ Multi  │
+  │ ▪ Dev/QA │           │ ▪ Cost   │           │ ▪ Monitor│          │ ▪ Comply │
+  └──────────┘           └──────────┘           └──────────┘          └──────────┘
+```
+
+### 🚀 Phase 5: Innovation (Year 2+)
+
+| Innovation | Description | Business Value |
+|:-----------|:------------|:---------------|
+| 🤖 **AI Chatbot** | IT support chatbot powered by LLM | 50% ticket deflection |
+| 🔮 **Predictive Maintenance** | ML-based failure prediction | 80% fewer incidents |
+| ⛓️ **Blockchain Credentials** | Verifiable academic credentials | Fraud prevention |
+| 📡 **IoT Campus** | Smart building integration | Energy savings |
+| 🖥️ **HPC Platform** | Research computing on-demand | Faculty research support |
+| 📊 **Data Lake** | Institutional analytics | Data-driven decisions |
 
 ---
 
-## 16. Future Roadmap
-
-### Phase 1: Foundation (Months 1-3)
-- Core platform infrastructure deployment
-- IAM and security framework
-- CI/CD pipeline establishment
-- Dev and QA environments
-- Basic monitoring and alerting
-
-### Phase 2: Integration (Months 4-6)
-- ServiceNow ITSM integration
-- Ellucian Ethos API integration
-- Cloud migration of first workloads
-- Cost governance implementation
-- UAT environment
-
-### Phase 3: Automation (Months 7-9)
-- Automation engine deployment
-- Self-service portal
-- Advanced monitoring and observability
-- Performance optimization
-- Production environment
-
-### Phase 4: Optimization (Months 10-12)
-- AI/ML-driven cost optimization
-- Predictive scaling
-- Advanced analytics and reporting
-- Multi-institution support
-- Continuous improvement framework
-
-### Phase 5: Innovation (Year 2+)
-- AI-powered chatbot for IT support
-- Predictive maintenance
-- Blockchain for credential verification
-- IoT campus integration
-- Research computing (HPC) platform
-
----
+<div align="center">
 
 ## Appendix
 
-### A. Glossary
+</div>
+
+<details>
+<summary><b>📖 A. Glossary</b></summary>
 
 | Term | Definition |
-|------|-----------|
+|:-----|:----------|
 | ECTP | Enterprise Cloud Transformation Platform |
 | FERPA | Family Educational Rights and Privacy Act |
 | ITSM | IT Service Management |
@@ -833,7 +1023,10 @@ The platform supports multi-institution deployment:
 | CMK | Customer Managed Key |
 | CMDB | Configuration Management Database |
 
-### B. References
+</details>
+
+<details>
+<summary><b>📚 B. References</b></summary>
 
 - AWS Well-Architected Framework
 - NIST Cybersecurity Framework
@@ -841,8 +1034,18 @@ The platform supports multi-institution deployment:
 - Ellucian Ethos API Documentation
 - ServiceNow Integration Best Practices
 
+</details>
+
+---
+
+<div align="center">
+
 ---
 
 **Document Author:** Gopi Krishna Vajrala
-**Review Status:** Approved
-**Next Review Date:** 2026-08-16
+
+**Enterprise Cloud Transformation Platform (ECTP)** — Architecture Document v1.0.0
+
+**Review Status:** ✅ Approved | **Next Review:** 2026-08-16
+
+</div>
