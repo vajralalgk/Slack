@@ -2,40 +2,55 @@
 # Enterprise Cloud Transformation Platform (ECTP) - Security Module
 # =============================================================================
 # Author: Gopi Krishna Vajrala
-# Purpose: Defines all security infrastructure for the ECTP platform,
-#          including security groups, IAM roles and policies, KMS encryption
-#          keys, and Secrets Manager configurations.
+# Description: Provisions security infrastructure including KMS encryption keys,
+#              IAM roles for ECS tasks, Secrets Manager for database credentials,
+#              and tiered security groups for ALB, application, and database layers.
 #
-# Security Architecture Overview:
-#   - Security Groups: Network-level access control for each tier
-#   - IAM Roles: Least-privilege roles for ECS tasks, RDS monitoring, etc.
-#   - KMS Keys: Customer-managed encryption keys for data at rest
-#   - Secrets Manager: Secure storage for application secrets
+# Architecture Overview:
+#   - KMS Key: Customer-managed encryption key for data at rest
+#   - IAM Roles: ECS task execution role and ECS task role (least privilege)
+#   - Secrets Manager: Stores and rotates database credentials securely
+#   - Security Groups: Three-tier model (ALB -> App -> DB) with least privilege
 #
-# Design Principles:
-#   1. Least Privilege: Every role/policy grants only the minimum permissions
-#   2. Defense in Depth: Multiple layers of security controls
-#   3. Separation of Duties: Distinct roles for different functions
-#   4. Encryption Everywhere: At rest (KMS) and in transit (TLS)
-#   5. Audit Everything: CloudTrail integration for all operations
+# Security Principles:
+#   - Defense in depth: Multiple layers of security controls
+#   - Least privilege: Each role/group has only the permissions needed
+#   - Encryption everywhere: KMS for data at rest, SSL/TLS for data in transit
+#   - Secret management: No hardcoded credentials, all via Secrets Manager
+#   - Audit trail: CloudTrail logs all KMS and IAM operations
 #
 # FERPA/Compliance:
-#   - All encryption uses customer-managed KMS keys with audit trails
-#   - Security groups implement strict tier-based access control
-#   - IAM roles are scoped to specific resources, not wildcards
-#   - Secrets are encrypted and access-logged via CloudTrail
+#   - Customer-managed KMS key provides granular access control and audit trail
+#   - Secrets Manager enables automatic rotation of database credentials
+#   - Security groups enforce network-level isolation between tiers
+#   - IAM roles follow least privilege for FERPA data access controls
 # =============================================================================
 
 # -----------------------------------------------------------------------------
 # Terraform Configuration Block
 # -----------------------------------------------------------------------------
+# Declares required provider versions for reproducible infrastructure builds.
+# Version pinning prevents unexpected breaking changes from provider updates.
+# -----------------------------------------------------------------------------
 terraform {
+  # Require Terraform 1.5+ for module features and security improvements
   required_version = ">= 1.5.0"
 
+  # Define required providers with version constraints
   required_providers {
+    # AWS provider for all security resource provisioning
     aws = {
-      source  = "hashicorp/aws"
+      # Use the official HashiCorp AWS provider from the registry
+      source = "hashicorp/aws"
+      # Pin to version 5.x for stability while getting patch updates
       version = "~> 5.0"
+    }
+    # Random provider for generating secure database passwords
+    random = {
+      # Use the official HashiCorp random provider
+      source = "hashicorp/random"
+      # Pin to version 3.x for consistent random value generation
+      version = "~> 3.0"
     }
   }
 }
@@ -44,793 +59,1156 @@ terraform {
 # Data Sources
 # -----------------------------------------------------------------------------
 
-# Current region for constructing ARNs and service endpoints.
-# WHY: ARNs include the region; using a data source avoids hardcoding.
-data "aws_region" "current" {}
-
-# Current AWS account ID for constructing ARNs and IAM policies.
-# WHY: IAM policies reference the account ID for resource-level permissions.
-# SECURITY: The account ID is used in resource ARNs to ensure policies
-#           target only resources in this specific account.
+# Retrieve the current AWS account ID for constructing IAM policy ARNs
+# WHY: Account-scoped ARNs ensure IAM policies reference the correct account
+# SECURITY: Using data source avoids hardcoding account IDs in policies
 data "aws_caller_identity" "current" {}
 
-# =============================================================================
-# LOCAL VALUES
-# =============================================================================
+# Retrieve the current AWS region for constructing service-specific ARNs
+# WHY: Region-scoped ARNs ensure resources are referenced in the correct region
+data "aws_region" "current" {}
+
+# -----------------------------------------------------------------------------
+# Input Variables - Parameters passed from the calling environment
+# -----------------------------------------------------------------------------
+
+# The deployment environment name for resource naming and policy decisions
+variable "environment" {
+  # Documents purpose: controls naming, key policies, and rotation schedules
+  description = "The deployment environment name (dev, staging, prod) - affects key policies and secret rotation"
+  # Enforce string type for the environment identifier
+  type = string
+
+  # Validate only known environment names are accepted
+  validation {
+    # Only allow predefined environment values to prevent misconfigurations
+    condition     = contains(["dev", "staging", "prod"], var.environment)
+    # Clear error message for invalid environment values
+    error_message = "Environment must be one of: dev, staging, prod."
+  }
+}
+
+# The project name prefix for consistent resource naming
+variable "project_name" {
+  # Documents purpose as naming prefix used across all resources
+  description = "The project name used as a prefix for all resource names and IAM policies"
+  # Enforce string type
+  type = string
+  # Default to ectp for the Enterprise Cloud Transformation Platform
+  default = "ectp"
+}
+
+# The VPC ID where security groups will be created
+variable "vpc_id" {
+  # Documents that security groups are VPC-scoped resources
+  description = "The ID of the VPC where security groups will be created (SGs are VPC-scoped)"
+  # Enforce string type
+  type = string
+}
+
+# The VPC CIDR block for internal traffic rules in security groups
+variable "vpc_cidr" {
+  # Documents usage in security group rules for VPC-internal traffic
+  description = "The VPC CIDR block used in security group rules to allow VPC-internal traffic"
+  # Enforce string type
+  type = string
+}
+
+# The container port that the ECS application listens on
+variable "container_port" {
+  # Documents the default port and its usage in security group rules
+  description = "The port the application container listens on (used in app-tier SG ingress rules)"
+  # Enforce number type
+  type = number
+  # Default to 8080 as the standard non-privileged HTTP port
+  default = 8080
+}
+
+# The database port for PostgreSQL security group rules
+variable "db_port" {
+  # Documents the PostgreSQL default port used in data-tier SG rules
+  description = "The PostgreSQL database port (used in database-tier SG ingress rules)"
+  # Enforce number type
+  type = number
+  # Default to 5432 which is the PostgreSQL standard port
+  default = 5432
+}
+
+# The database name stored in the Secrets Manager secret
+variable "db_name" {
+  # Documents that this value is included in the Secrets Manager JSON
+  description = "The database name stored in the Secrets Manager secret for application retrieval"
+  # Enforce string type
+  type = string
+  # Default to ectp_db as the standard database name
+  default = "ectp_db"
+}
+
+# The database master username stored in the Secrets Manager secret
+variable "db_username" {
+  # Documents that this is stored in Secrets Manager alongside the password
+  description = "The database master username stored in the Secrets Manager secret"
+  # Enforce string type
+  type = string
+  # Default to ectp_admin as the descriptive admin username
+  default = "ectp_admin"
+}
+
+# Tags to apply to all resources for cost tracking and governance
+variable "tags" {
+  # Documents the tagging strategy
+  description = "Map of tags applied to all resources for cost allocation and compliance tracking"
+  # Enforce map of strings type
+  type = map(string)
+  # Default to empty map; merged with module-level default tags
+  default = {}
+}
+
+# -----------------------------------------------------------------------------
+# Local Values - Computed values used throughout this module
+# -----------------------------------------------------------------------------
 locals {
-  # Standard name prefix.
+  # Construct a consistent name prefix from project name and environment
+  # Format: "ectp-dev", "ectp-staging", "ectp-prod"
   name_prefix = "${var.project_name}-${var.environment}"
 
-  # AWS account ID for ARN construction.
+  # The AWS account ID retrieved from the data source
+  # WHY: Used in IAM policies and KMS key policies for account-scoped access
   account_id = data.aws_caller_identity.current.account_id
 
-  # AWS region for ARN construction.
+  # The AWS region name retrieved from the data source
+  # WHY: Used in ARN construction for region-specific resources
   region = data.aws_region.current.name
 
-  # Common tags for all resources.
-  common_tags = merge(var.tags, {
-    Module      = "security"
-    Project     = var.project_name
-    Environment = var.environment
-    ManagedBy   = "terraform"
-    Author      = "Gopi Krishna Vajrala"
-  })
+  # Merge user-provided tags with module-default tags for governance
+  common_tags = merge(
+    # Include any tags passed from the calling module or environment
+    var.tags,
+    {
+      # Tag identifying which Terraform module provisioned this resource
+      Module = "security"
+      # Tag identifying the deployment environment for filtering
+      Environment = var.environment
+      # Tag identifying the project for cost allocation
+      Project = var.project_name
+      # Tag indicating this resource is managed by Terraform
+      ManagedBy = "terraform"
+      # Tag identifying the original author for accountability
+      Author = "Gopi Krishna Vajrala"
+    }
+  )
 }
 
 # =============================================================================
-# KMS CUSTOMER-MANAGED KEY
+# KMS KEY FOR ENCRYPTION AT REST
 # =============================================================================
-# WHAT: A customer-managed KMS key used to encrypt all sensitive data across
-#       the ECTP platform, including RDS storage, CloudWatch Logs, Secrets
-#       Manager secrets, S3 buckets, and EBS volumes.
-# WHY: Customer-managed KMS keys (CMKs) provide advantages over AWS-managed keys:
-#       1. Custom key policies for fine-grained access control
-#       2. Automatic annual key rotation
-#       3. CloudTrail audit logging of every encrypt/decrypt operation
-#       4. Ability to disable or revoke the key to render data unreadable
-#       5. Cross-account sharing for disaster recovery scenarios
-# SECURITY IMPLICATIONS:
-#   - The key policy defines WHO can use this key (encrypt/decrypt)
-#   - Losing access to this key means ALL encrypted data is PERMANENTLY
-#     unrecoverable. Key management procedures must be documented.
-#   - Key rotation creates new key material annually; old data remains
-#     decryptable using the previous key material (managed automatically).
-#   - The deletion window (7-30 days) provides a safety net against
-#     accidental key deletion. During this window, the key can be recovered.
-# ALTERNATIVES:
-#   - AWS-managed keys: Simpler but no audit trail or custom policies
-#   - Imported key material: For organizations requiring BYOK (Bring Your Own Key)
-#   - AWS CloudHSM: For FIPS 140-2 Level 3 compliance requirements
+# WHAT: A customer-managed KMS key used to encrypt data at rest across all
+#       ECTP services: RDS storage, EBS volumes, S3 objects, CloudWatch Logs,
+#       Secrets Manager secrets, and SNS messages.
+# WHY: Customer-managed keys provide:
+#      1. Granular access control via key policy (who can encrypt/decrypt)
+#      2. Automatic annual key rotation for security best practices
+#      3. CloudTrail audit trail of all encryption/decryption operations
+#      4. Ability to revoke access by disabling or deleting the key
+#      5. Cross-service encryption with a single managed key
+# SECURITY: The key policy follows least privilege, granting:
+#           - Root account: Full key administration (for break-glass scenarios)
+#           - IAM policies: Delegated access control via IAM (normal operation)
+#           - RDS/CloudWatch: Service-specific grant for encryption operations
+# COMPLIANCE: FERPA requires encryption of student data at rest; a customer-managed
+#             key satisfies this requirement with full audit trail capability.
 # =============================================================================
 resource "aws_kms_key" "main" {
-  # Description visible in the KMS console for identification.
-  description = "ECTP ${var.environment} master encryption key - encrypts RDS, CloudWatch, Secrets Manager, and S3 data. Customer-managed with annual rotation."
+  # Provide a detailed description for key identification in the KMS console
+  # WHY: Descriptions help operators understand which key to use for which service
+  description = "Customer-managed KMS key for ${local.name_prefix} - encrypts RDS, CloudWatch Logs, Secrets Manager, and S3"
 
-  # Enable automatic key rotation (new key material every 365 days).
-  # WHAT: AWS generates new cryptographic material annually. Old material
-  #       is retained so previously encrypted data can still be decrypted.
-  # WHY: Key rotation limits the amount of data encrypted under a single
-  #       key version, reducing the blast radius of a key compromise.
-  # SECURITY: This is a compliance requirement for many frameworks
-  #           (PCI DSS, SOC 2) and a best practice for FERPA.
+  # Enable automatic annual key rotation for security
+  # WHY: Key rotation limits the amount of data encrypted with a single key version,
+  #      reducing the impact if a key is ever compromised
+  # SECURITY: AWS handles rotation transparently; old key versions remain available
+  #           for decrypting previously encrypted data
   enable_key_rotation = true
 
-  # Deletion waiting period (days).
-  # WHY: 30 days gives ample time to realize a mistake and cancel the deletion.
-  #       Once the key is deleted, ALL data encrypted with it is PERMANENTLY LOST.
-  # SECURITY: A shorter window (7 days minimum) is faster but more risky.
-  #           30 days is recommended for production environments.
-  deletion_window_in_days = var.environment == "prod" ? 30 : 7
+  # Set the deletion waiting period to 30 days (maximum) for safety
+  # WHY: Once a KMS key is deleted, ALL data encrypted with it becomes
+  #      permanently unrecoverable. The 30-day window allows time to
+  #      realize the mistake and cancel the deletion.
+  # SECURITY: This is a critical safety net; accidental key deletion
+  #           would be catastrophic for the entire platform
+  deletion_window_in_days = 30
 
-  # Multi-region: keep as single-region unless DR requires cross-region encryption.
-  # WHY: Multi-region keys add complexity and cost. Only enable for
-  #       cross-region disaster recovery scenarios.
-  multi_region = false
+  # Set the key usage to ENCRYPT_DECRYPT for symmetric encryption
+  # WHY: Symmetric encryption is used for data at rest (RDS, S3, CloudWatch)
+  #      Asymmetric keys are used for signing, not bulk data encryption
+  key_usage = "ENCRYPT_DECRYPT"
 
-  # Key policy defining who can manage and use this key.
-  # WHY: The key policy is the primary access control mechanism for KMS keys.
-  #       It defines which IAM principals can perform key operations.
-  # SECURITY: The policy follows least privilege:
-  #           - Root account has full administration (required for key management)
-  #           - Specific IAM roles get only encrypt/decrypt (usage)
-  #           - No wildcards for principal or action specifications
+  # Use symmetric encryption for all data-at-rest use cases
+  # WHY: SYMMETRIC_DEFAULT uses AES-256-GCM which provides both confidentiality
+  #      and integrity protection for encrypted data
+  customer_master_key_spec = "SYMMETRIC_DEFAULT"
+
+  # Enable the key for immediate use after creation
+  # WHY: A disabled key cannot encrypt or decrypt data; enabling ensures
+  #      dependent resources (RDS, CloudWatch) can use it immediately
+  is_enabled = true
+
+  # Define the key policy controlling who can manage and use the key
+  # WHY: The key policy is the primary access control mechanism for KMS keys
+  #      It works in conjunction with IAM policies for defense in depth
+  # SECURITY: The policy grants:
+  #           1. Root account: Full administration for break-glass access
+  #           2. IAM delegation: Allows IAM policies to grant key access
+  #           3. Service principals: RDS and CloudWatch can use the key
   policy = jsonencode({
+    # Use the current IAM policy language version
     Version = "2012-10-17"
-    Id      = "${local.name_prefix}-key-policy"
+    # Define the access control statements
     Statement = [
       {
-        # Allow the root account full control of the key.
-        # WHY: This is REQUIRED by AWS. Without this statement, the key
-        #       could become unmanageable if the creating IAM entity is deleted.
-        # SECURITY: Root account access is controlled by MFA and account-level
-        #           controls, not the key policy. This is a safety mechanism.
-        Sid    = "EnableRootAccountAccess"
+        # Statement ID for identification in policy analysis
+        Sid = "EnableRootAccountAccess"
+        # Allow the specified actions
         Effect = "Allow"
+        # Grant access to the root account (full administration)
+        # WHY: Root access ensures the key can always be managed even if
+        #      IAM roles/users are accidentally deleted or misconfigured
         Principal = {
+          # The root principal of the AWS account
           AWS = "arn:aws:iam::${local.account_id}:root"
         }
-        Action   = "kms:*"
+        # Grant all KMS actions for full key administration
+        # WHY: Root needs full access for break-glass scenarios
+        Action = "kms:*"
+        # Apply to this specific KMS key
         Resource = "*"
       },
       {
-        # Allow key administrators to manage (but not use) the key.
-        # WHY: Separation of duties -- administrators can manage key metadata,
-        #       rotation, and policies, but cannot encrypt or decrypt data.
-        # SECURITY: This prevents administrators from accessing encrypted data
-        #           while still allowing them to manage the key lifecycle.
-        Sid    = "AllowKeyAdministration"
+        # Statement allowing IAM policies to delegate key access
+        Sid = "AllowIAMPolicyDelegation"
+        # Allow the specified actions
         Effect = "Allow"
+        # Grant access to all principals in this account (filtered by IAM policies)
         Principal = {
+          # Any IAM principal in this account can be granted access via IAM policy
           AWS = "arn:aws:iam::${local.account_id}:root"
         }
+        # Specific KMS actions needed for encryption/decryption operations
         Action = [
-          "kms:Create*",
-          "kms:Describe*",
-          "kms:Enable*",
-          "kms:List*",
-          "kms:Put*",
-          "kms:Update*",
-          "kms:Revoke*",
-          "kms:Disable*",
-          "kms:Get*",
-          "kms:Delete*",
-          "kms:TagResource",
-          "kms:UntagResource",
-          "kms:ScheduleKeyDeletion",
-          "kms:CancelKeyDeletion"
-        ]
-        Resource = "*"
-      },
-      {
-        # Allow AWS services to use the key for encryption.
-        # WHY: Services like RDS, CloudWatch, and S3 need to encrypt/decrypt
-        #       data using this key on behalf of the ECTP resources.
-        # SECURITY: The condition restricts key usage to only AWS services
-        #           operating within this specific account, preventing
-        #           cross-account key usage.
-        Sid    = "AllowServiceEncryption"
-        Effect = "Allow"
-        Principal = {
-          AWS = "arn:aws:iam::${local.account_id}:root"
-        }
-        Action = [
+          # Allow encrypting data with this key
           "kms:Encrypt",
+          # Allow decrypting data encrypted with this key
           "kms:Decrypt",
+          # Allow re-encrypting data (e.g., during key rotation)
           "kms:ReEncrypt*",
+          # Allow generating data keys for envelope encryption
           "kms:GenerateDataKey*",
-          "kms:DescribeKey"
+          # Allow describing the key metadata
+          "kms:DescribeKey",
+          # Allow creating grants for AWS service integration
+          "kms:CreateGrant",
+          # Allow listing grants on this key
+          "kms:ListGrants",
+          # Allow revoking grants
+          "kms:RevokeGrant"
         ]
+        # Apply to this specific KMS key
         Resource = "*"
       },
       {
-        # Allow CloudWatch Logs to use this key for log encryption.
-        # WHY: CloudWatch Logs service needs explicit permission to use
-        #       customer-managed keys for log group encryption.
-        # SECURITY: Scoped to only the CloudWatch Logs service principal
-        #           in the current region.
-        Sid    = "AllowCloudWatchLogsEncryption"
+        # Statement allowing CloudWatch Logs to use the key for log encryption
+        Sid = "AllowCloudWatchLogs"
+        # Allow the specified actions
         Effect = "Allow"
+        # Grant access to the CloudWatch Logs service principal
         Principal = {
+          # CloudWatch Logs service needs direct key access for log encryption
           Service = "logs.${local.region}.amazonaws.com"
         }
+        # CloudWatch Logs needs these specific KMS actions
         Action = [
+          # Encrypt log data as it is written
           "kms:Encrypt",
+          # Decrypt log data when read by authorized principals
           "kms:Decrypt",
+          # Re-encrypt during key rotation
           "kms:ReEncrypt*",
+          # Generate data keys for envelope encryption of log data
           "kms:GenerateDataKey*",
+          # Describe key to verify key state before operations
           "kms:DescribeKey"
         ]
+        # Apply to this specific KMS key
         Resource = "*"
+        # Condition restricting which CloudWatch log groups can use this key
         Condition = {
           ArnLike = {
-            "kms:EncryptionContext:aws:logs:arn" = "arn:aws:logs:${local.region}:${local.account_id}:log-group:*"
+            # Only allow log groups in this account and region to use the key
+            "kms:EncryptionContext:aws:logs:arn" = "arn:aws:logs:${local.region}:${local.account_id}:*"
           }
         }
       }
     ]
   })
 
-  tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-master-key"
-  })
+  # Apply common tags plus a descriptive Name tag
+  tags = merge(
+    # Include all common tags for governance
+    local.common_tags,
+    {
+      # Name tag for identification in the KMS console
+      Name = "${local.name_prefix}-kms-key"
+    }
+  )
 }
 
-# -----------------------------------------------------------------------------
-# KMS Key Alias
-# -----------------------------------------------------------------------------
-# WHAT: A human-readable alias for the KMS key.
-# WHY: KMS key IDs are UUIDs (e.g., "1234abcd-..."). An alias provides a
-#       friendly name for console navigation and CLI commands.
-# SECURITY: Aliases can be retargeted to different keys, so IAM policies
-#           should reference the key ARN, not the alias ARN.
-# -----------------------------------------------------------------------------
+# Create a human-readable alias for the KMS key
+# WHY: Aliases provide a friendly name (alias/ectp-dev-key) instead of the
+#      UUID key ID, making it easier to reference in CLI commands and documentation
 resource "aws_kms_alias" "main" {
-  # Alias must start with "alias/" prefix (AWS requirement).
-  name = "alias/${local.name_prefix}-master-key"
+  # Set the alias name with the standard naming convention
+  # WHY: The alias/ prefix is required by AWS for KMS key aliases
+  name = "alias/${local.name_prefix}-key"
 
-  # Point to our customer-managed key.
+  # Reference the KMS key created above
+  # WHY: Associates this human-readable alias with the actual KMS key
   target_key_id = aws_kms_key.main.key_id
 }
 
 # =============================================================================
-# SECURITY GROUPS
+# IAM ROLE - ECS TASK EXECUTION ROLE
 # =============================================================================
-# Security groups are virtual firewalls that control inbound and outbound
-# traffic at the resource level (ENI level). Unlike NACLs, security groups
-# are STATEFUL (return traffic is automatically allowed).
-#
-# ECTP Security Group Architecture:
-#   1. ALB Security Group: Allows HTTP/HTTPS from internet -> ALB
-#   2. ECS Security Group: Allows traffic from ALB -> ECS tasks
-#   3. Database Security Group: Allows PostgreSQL from ECS -> RDS
-#
-# This implements a strict chain: Internet -> ALB -> ECS -> RDS
-# Each link only allows the specific protocol and port needed.
-# =============================================================================
-
-# -----------------------------------------------------------------------------
-# ALB Security Group
-# -----------------------------------------------------------------------------
-# WHAT: Security group for the Application Load Balancer that terminates
-#       HTTPS traffic from the internet.
-# WHY: The ALB is the ONLY resource that accepts traffic from the internet.
-#       This security group defines exactly what traffic is allowed.
-# SECURITY IMPLICATIONS:
-#   - Allows inbound HTTP (80) and HTTPS (443) from anywhere (0.0.0.0/0)
-#   - HTTP is allowed only for the HTTPS redirect listener
-#   - Outbound is restricted to only the ECS tasks on the container port
-#   - This is the outermost security boundary for all ECTP traffic
-# ALTERNATIVES:
-#   - Could restrict inbound to specific CIDR ranges for campus-only access
-#   - Could integrate with AWS WAF for application-layer filtering
-#   - Could use AWS Shield Advanced for DDoS protection
-# -----------------------------------------------------------------------------
-resource "aws_security_group" "alb" {
-  # Name that clearly identifies the purpose and environment.
-  name        = "${local.name_prefix}-alb-sg"
-  description = "Security group for ECTP ALB - allows HTTPS from internet, forwards to ECS tasks. This is the internet-facing entry point."
-
-  # Associate with the VPC.
-  vpc_id = var.vpc_id
-
-  tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-alb-sg"
-    Tier = "public"  # Indicates this SG is for public-facing resources
-  })
-}
-
-# ALB Ingress: Allow HTTPS (443) from anywhere.
-# WHAT: Permits inbound HTTPS traffic from any source IP.
-# WHY: Students, faculty, and staff access ECTP from various networks
-#       (campus, home, mobile). We cannot predict their source IPs.
-# SECURITY: HTTPS ensures all data in transit is encrypted.
-#           WAF integration (not in this module) provides additional Layer 7 protection.
-# ALTERNATIVE: Restrict to campus IP ranges for internal-only applications.
-resource "aws_security_group_rule" "alb_ingress_https" {
-  type              = "ingress"           # Inbound rule
-  from_port         = 443                  # HTTPS port
-  to_port           = 443                  # Single port (not a range)
-  protocol          = "tcp"                # TCP protocol for HTTPS
-  cidr_blocks       = ["0.0.0.0/0"]       # Allow from any IPv4 source
-  security_group_id = aws_security_group.alb.id
-  description       = "Allow HTTPS from internet - primary entry point for ECTP users"
-}
-
-# ALB Ingress: Allow HTTP (80) from anywhere for HTTPS redirect.
-# WHAT: Permits inbound HTTP traffic for the sole purpose of redirecting to HTTPS.
-# WHY: Users may type "http://" in their browser. Without this rule, the
-#       redirect listener cannot receive and redirect their requests.
-# SECURITY: The ALB listener on port 80 ONLY performs a 301 redirect to HTTPS.
-#           No application traffic is ever served over HTTP.
-resource "aws_security_group_rule" "alb_ingress_http" {
-  type              = "ingress"
-  from_port         = 80
-  to_port           = 80
-  protocol          = "tcp"
-  cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = aws_security_group.alb.id
-  description       = "Allow HTTP from internet for HTTPS redirect only - no unencrypted traffic is served"
-}
-
-# ALB Egress: Allow traffic to ECS tasks on the container port.
-# WHAT: Permits the ALB to send traffic to ECS Fargate tasks.
-# WHY: After terminating TLS, the ALB forwards HTTP traffic to the
-#       ECS tasks on the container port (default 8000).
-# SECURITY: Egress is restricted to ONLY the ECS security group on the
-#           container port. The ALB cannot send traffic to the database
-#           or any other resource directly.
-resource "aws_security_group_rule" "alb_egress_to_ecs" {
-  type                     = "egress"
-  from_port                = var.container_port
-  to_port                  = var.container_port
-  protocol                 = "tcp"
-  source_security_group_id = aws_security_group.ecs_tasks.id   # Only to ECS tasks
-  security_group_id        = aws_security_group.alb.id
-  description              = "Allow ALB to forward traffic to ECS tasks on container port"
-}
-
-# -----------------------------------------------------------------------------
-# ECS Tasks Security Group
-# -----------------------------------------------------------------------------
-# WHAT: Security group for ECS Fargate tasks running the FastAPI application.
-# WHY: Controls what traffic can reach the application containers and what
-#       outbound traffic the application can initiate.
-# SECURITY IMPLICATIONS:
-#   - Inbound: ONLY from the ALB on the container port (no other source)
-#   - Outbound: PostgreSQL to the database SG + HTTPS for external API calls
-#   - Tasks have no public IPs and are in private subnets
-#   - The security group + private subnet + no public IP = three layers
-#     of protection against direct internet access
-# -----------------------------------------------------------------------------
-resource "aws_security_group" "ecs_tasks" {
-  name        = "${local.name_prefix}-ecs-tasks-sg"
-  description = "Security group for ECTP ECS Fargate tasks - accepts traffic only from ALB, connects to database and external services"
-
-  vpc_id = var.vpc_id
-
-  tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-ecs-tasks-sg"
-    Tier = "private-app"  # Application tier
-  })
-}
-
-# ECS Ingress: Allow traffic from ALB on the container port.
-# WHAT: Permits inbound traffic from the ALB to the FastAPI application.
-# WHY: The ALB forwards user requests to ECS tasks. Without this rule,
-#       no traffic would reach the application.
-# SECURITY: By specifying the ALB security group as the source (instead of
-#           a CIDR range), only traffic from the ALB is allowed. Even if
-#           another resource has the same IP, it would be denied without
-#           the ALB security group membership.
-resource "aws_security_group_rule" "ecs_ingress_from_alb" {
-  type                     = "ingress"
-  from_port                = var.container_port
-  to_port                  = var.container_port
-  protocol                 = "tcp"
-  source_security_group_id = aws_security_group.alb.id         # Only from ALB
-  security_group_id        = aws_security_group.ecs_tasks.id
-  description              = "Allow inbound from ALB on container port - the only permitted traffic source"
-}
-
-# ECS Egress: Allow PostgreSQL connections to the database.
-# WHAT: Permits ECS tasks to connect to the RDS PostgreSQL database.
-# WHY: The FastAPI application needs to query and write data to PostgreSQL.
-# SECURITY: Restricted to ONLY the database security group on port 5432.
-#           ECS tasks cannot connect to databases in other security groups
-#           or on non-PostgreSQL ports.
-resource "aws_security_group_rule" "ecs_egress_to_db" {
-  type                     = "egress"
-  from_port                = 5432
-  to_port                  = 5432
-  protocol                 = "tcp"
-  source_security_group_id = aws_security_group.database.id    # Only to database SG
-  security_group_id        = aws_security_group.ecs_tasks.id
-  description              = "Allow ECS tasks to connect to RDS PostgreSQL on port 5432"
-}
-
-# ECS Egress: Allow HTTPS for AWS API calls and external services.
-# WHAT: Permits outbound HTTPS (443) connections from ECS tasks.
-# WHY: ECS tasks need outbound HTTPS access for:
-#       1. Pulling container images from ECR
-#       2. Sending logs to CloudWatch
-#       3. Fetching secrets from Secrets Manager
-#       4. Calling external APIs (SIS, LMS, payment gateways)
-#       5. Sending metrics and traces to monitoring services
-# SECURITY: HTTPS outbound is relatively safe because:
-#           - All traffic is encrypted
-#           - The NAT Gateway's static IP can be logged
-#           - VPC Endpoints can replace internet calls for AWS services
-# ALTERNATIVE: For maximum security, restrict outbound to only VPC Endpoints
-#              and specific external IP ranges. This is complex to maintain
-#              but eliminates all internet egress.
-resource "aws_security_group_rule" "ecs_egress_https" {
-  type              = "egress"
-  from_port         = 443
-  to_port           = 443
-  protocol          = "tcp"
-  cidr_blocks       = ["0.0.0.0/0"]       # Allow HTTPS to any destination
-  security_group_id = aws_security_group.ecs_tasks.id
-  description       = "Allow HTTPS outbound for AWS API calls (ECR, CloudWatch, Secrets Manager) and external service integrations"
-}
-
-# ECS Egress: Allow DNS resolution (required for service discovery).
-# WHAT: Permits outbound DNS queries (port 53 TCP/UDP) from ECS tasks.
-# WHY: ECS tasks need DNS resolution for:
-#       1. Resolving RDS endpoints to IP addresses
-#       2. Resolving AWS service endpoints (ECR, CloudWatch, etc.)
-#       3. Resolving external service hostnames
-# SECURITY: DNS traffic is typically unencrypted but essential for operation.
-#           Consider using Route 53 Resolver DNS Firewall for DNS filtering.
-resource "aws_security_group_rule" "ecs_egress_dns_tcp" {
-  type              = "egress"
-  from_port         = 53
-  to_port           = 53
-  protocol          = "tcp"
-  cidr_blocks       = [var.vpc_cidr]       # DNS within VPC only
-  security_group_id = aws_security_group.ecs_tasks.id
-  description       = "Allow DNS TCP within VPC for service name resolution"
-}
-
-resource "aws_security_group_rule" "ecs_egress_dns_udp" {
-  type              = "egress"
-  from_port         = 53
-  to_port           = 53
-  protocol          = "udp"
-  cidr_blocks       = [var.vpc_cidr]       # DNS within VPC only
-  security_group_id = aws_security_group.ecs_tasks.id
-  description       = "Allow DNS UDP within VPC for service name resolution"
-}
-
-# -----------------------------------------------------------------------------
-# Database Security Group
-# -----------------------------------------------------------------------------
-# WHAT: Security group for the RDS PostgreSQL database instance.
-# WHY: Restricts database access to ONLY the ECS tasks security group.
-#       No other resource can connect to the database.
-# SECURITY IMPLICATIONS:
-#   - Inbound: ONLY from ECS tasks on port 5432 (PostgreSQL)
-#   - No inbound from public subnets, bastion hosts, or other sources
-#   - Combined with private data subnets and NACLs, this provides
-#     three layers of network access control for the database.
-# FERPA: Network-level isolation of the database ensures student data
-#        is only accessible through the authorized application.
-# ALTERNATIVE: Could add a bastion host SG rule for emergency DBA access.
-#              If needed, use AWS Systems Manager Session Manager instead
-#              (no security group changes needed, fully audited).
-# -----------------------------------------------------------------------------
-resource "aws_security_group" "database" {
-  name        = "${local.name_prefix}-database-sg"
-  description = "Security group for ECTP RDS PostgreSQL - accepts connections only from ECS tasks on port 5432. No public or direct access permitted."
-
-  vpc_id = var.vpc_id
-
-  tags = merge(local.common_tags, {
-    Name               = "${local.name_prefix}-database-sg"
-    Tier               = "private-data"
-    DataClassification = "confidential"  # Database handles sensitive data
-  })
-}
-
-# Database Ingress: Allow PostgreSQL from ECS tasks.
-# WHAT: Permits inbound PostgreSQL connections from the ECS tasks SG.
-# WHY: The FastAPI application needs database connectivity.
-# SECURITY: Source is restricted to the ECS tasks security group.
-#           Even resources in the same VPC CIDR range cannot connect
-#           unless they are members of the ECS tasks security group.
-resource "aws_security_group_rule" "db_ingress_from_ecs" {
-  type                     = "ingress"
-  from_port                = 5432
-  to_port                  = 5432
-  protocol                 = "tcp"
-  source_security_group_id = aws_security_group.ecs_tasks.id   # Only from ECS tasks
-  security_group_id        = aws_security_group.database.id
-  description              = "Allow PostgreSQL connections from ECS Fargate tasks only"
-}
-
-# Database Egress: Allow outbound HTTPS for AWS service communication.
-# WHAT: Permits the database to make outbound HTTPS calls.
-# WHY: RDS needs outbound access for:
-#       1. Enhanced Monitoring metrics delivery to CloudWatch
-#       2. CloudWatch Logs export
-#       3. AWS service communication for maintenance operations
-# SECURITY: Egress from the database is low-risk because RDS is a managed
-#           service and does not run arbitrary user code.
-resource "aws_security_group_rule" "db_egress_https" {
-  type              = "egress"
-  from_port         = 443
-  to_port           = 443
-  protocol          = "tcp"
-  cidr_blocks       = ["0.0.0.0/0"]
-  security_group_id = aws_security_group.database.id
-  description       = "Allow RDS outbound HTTPS for Enhanced Monitoring, CloudWatch Logs, and AWS service communication"
-}
-
-# =============================================================================
-# IAM ROLES AND POLICIES
-# =============================================================================
-# IAM roles define WHAT permissions a service or resource has. Each role
-# follows the principle of least privilege -- only the minimum permissions
-# needed for the role's specific function.
-# =============================================================================
-
-# =============================================================================
-# ECS TASK EXECUTION ROLE
-# =============================================================================
-# WHAT: IAM role assumed by the ECS agent (not the application) to perform
-#       container lifecycle operations.
-# WHY: The ECS agent needs permissions to:
-#       1. Pull container images from ECR
-#       2. Write container logs to CloudWatch
-#       3. Fetch secrets from Secrets Manager for container env vars
-# SECURITY: This role is used by the ECS infrastructure, NOT the application.
-#           It should have NO application-level permissions (no S3, no DynamoDB).
-#           Keeping this role minimal reduces the impact if the ECS agent
-#           infrastructure is compromised.
-# ALTERNATIVE: The AWS-managed AmazonECSTaskExecutionRolePolicy provides
-#              basic permissions, but it's overly broad. A custom policy
-#              is preferred for production environments.
-# =============================================================================
-resource "aws_iam_role" "ecs_execution" {
-  name = "${local.name_prefix}-ecs-execution-role"
-
-  # Trust policy: only ECS tasks service can assume this role.
-  # SECURITY: Prevents any other service or user from assuming this role.
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        Sid    = "AllowECSTasksAssume"
-        Effect = "Allow"
-        Principal = {
-          Service = "ecs-tasks.amazonaws.com"    # Only ECS task service
-        }
-        Action = "sts:AssumeRole"
-      }
-    ]
-  })
-
-  tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-ecs-execution-role"
-  })
-}
-
-# ECS Task Execution Policy: ECR Image Pull + CloudWatch Logs + Secrets Manager
-# WHAT: Custom policy granting the minimum permissions for ECS task startup.
-# WHY: Granular permissions instead of AWS-managed policies for security.
-# SECURITY: Each action is justified and scoped to specific resources where possible.
-resource "aws_iam_role_policy" "ecs_execution" {
-  name = "${local.name_prefix}-ecs-execution-policy"
-  role = aws_iam_role.ecs_execution.id
-
-  policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
-      {
-        # Allow pulling container images from Amazon ECR.
-        # WHY: ECS needs to download the Docker image before starting the container.
-        # SECURITY: Scoped to ECR actions only; cannot push images or manage repos.
-        Sid    = "AllowECRImagePull"
-        Effect = "Allow"
-        Action = [
-          "ecr:GetDownloadUrlForLayer",   # Get pre-signed URL for image layer
-          "ecr:BatchGetImage",             # Get image manifest and layers
-          "ecr:BatchCheckLayerAvailability" # Check if layers are already cached
-        ]
-        # Resource is "*" because the ECR repo ARN is not known at this point.
-        # In production, scope to specific repository ARNs.
-        Resource = "*"
-      },
-      {
-        # Allow authenticating to ECR.
-        # WHY: Required to get an authorization token for ECR image pulls.
-        # SECURITY: GetAuthorizationToken does not require a specific resource.
-        Sid      = "AllowECRAuth"
-        Effect   = "Allow"
-        Action   = "ecr:GetAuthorizationToken"
-        Resource = "*"
-      },
-      {
-        # Allow writing container logs to CloudWatch.
-        # WHY: Container stdout/stderr is sent to CloudWatch via the awslogs driver.
-        # SECURITY: Write-only access; cannot read or delete existing logs.
-        Sid    = "AllowCloudWatchLogs"
-        Effect = "Allow"
-        Action = [
-          "logs:CreateLogStream",    # Create a log stream for each task
-          "logs:PutLogEvents"        # Write log events to the stream
-        ]
-        Resource = "arn:aws:logs:${local.region}:${local.account_id}:log-group:/ectp/${var.environment}/*"
-      },
-      {
-        # Allow fetching secrets from Secrets Manager.
-        # WHY: Container secrets (database credentials, API keys) are stored
-        #       in Secrets Manager and injected at task startup.
-        # SECURITY: Scoped to only ECTP secrets in this environment.
-        #           Cannot access secrets from other projects or environments.
-        Sid    = "AllowSecretsManagerRead"
-        Effect = "Allow"
-        Action = [
-          "secretsmanager:GetSecretValue"   # Read the secret value
-        ]
-        Resource = "arn:aws:secretsmanager:${local.region}:${local.account_id}:secret:${local.name_prefix}/*"
-      },
-      {
-        # Allow decrypting secrets and logs with the KMS key.
-        # WHY: Secrets and logs are encrypted with the customer-managed KMS key.
-        #       The ECS agent needs decrypt permission to read them.
-        # SECURITY: Scoped to only the ECTP KMS key; cannot decrypt data
-        #           encrypted with other keys.
-        Sid    = "AllowKMSDecrypt"
-        Effect = "Allow"
-        Action = [
-          "kms:Decrypt",
-          "kms:GenerateDataKey"
-        ]
-        Resource = aws_kms_key.main.arn
-      }
-    ]
-  })
-}
-
-# =============================================================================
-# ECS TASK ROLE
-# =============================================================================
-# WHAT: IAM role assumed by the application code running INSIDE the container.
-# WHY: The task role determines what AWS services the FastAPI application
-#       can access at runtime. This is separate from the execution role
-#       (which is used by the ECS agent for container lifecycle).
+# WHAT: The IAM role assumed by the ECS agent (not the application) to perform
+#       infrastructure operations: pulling container images, writing logs,
+#       and fetching secrets from Secrets Manager.
+# WHY: The execution role is separate from the task role to follow the
+#      principle of least privilege. The ECS agent needs different permissions
+#      than the application running inside the container.
 # SECURITY:
-#   - This role should only have permissions the application actually needs.
-#   - Start with NO permissions and add only what the application requires.
-#   - Each permission should be documented with WHY it's needed.
-#   - Resource ARNs should be as specific as possible (no wildcards).
+#   - Trust policy restricts assumption to only the ECS Tasks service
+#   - Permissions are scoped to only ECR, CloudWatch Logs, and Secrets Manager
+#   - No wildcard actions; each permission is explicitly listed
+#   - KMS decrypt permission is scoped to the project KMS key only
 # =============================================================================
-resource "aws_iam_role" "ecs_task" {
-  name = "${local.name_prefix}-ecs-task-role"
+resource "aws_iam_role" "ecs_task_execution" {
+  # Name the role with the standard naming convention
+  # WHY: Including environment prevents naming conflicts in shared accounts
+  name = "${local.name_prefix}-ecs-task-execution-role"
 
-  # Trust policy: only ECS tasks can assume this role.
+  # Trust policy defining which service can assume this role
+  # WHY: Only the ECS Tasks service should be able to assume this role
+  # SECURITY: Restricting the principal prevents unauthorized role assumption
   assume_role_policy = jsonencode({
+    # Use the current IAM policy language version
     Version = "2012-10-17"
+    # Define the trust relationship
     Statement = [
       {
-        Sid    = "AllowECSTasksAssume"
+        # Allow the AssumeRole action
+        Action = "sts:AssumeRole"
+        # Permit this action
         Effect = "Allow"
+        # Restrict to the ECS Tasks service principal only
         Principal = {
+          # Only ECS Tasks can assume this role
           Service = "ecs-tasks.amazonaws.com"
         }
-        Action = "sts:AssumeRole"
       }
     ]
   })
 
-  tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-ecs-task-role"
+  # Apply common tags for governance
+  tags = merge(
+    # Include all common tags
+    local.common_tags,
+    {
+      # Name tag for IAM console identification
+      Name = "${local.name_prefix}-ecs-task-execution-role"
+    }
+  )
+}
+
+# Attach the AWS-managed ECS task execution policy
+# WHY: This managed policy provides the baseline permissions for ECS task execution:
+#      ECR image pull, CloudWatch Logs write, and basic ECS operations
+# SECURITY: The managed policy is maintained by AWS and follows best practices
+resource "aws_iam_role_policy_attachment" "ecs_task_execution_base" {
+  # Attach to our custom execution role
+  role = aws_iam_role.ecs_task_execution.name
+  # Use the AWS-managed policy for ECS task execution
+  # WHY: Provides ecr:GetDownloadUrlForLayer, ecr:BatchGetImage, logs:CreateLogStream, etc.
+  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonECSTaskExecutionRolePolicy"
+}
+
+# Custom policy for Secrets Manager access (not in the managed policy)
+# WHY: The managed ECS execution policy does not include Secrets Manager access.
+#      We need this for injecting database credentials into containers at startup.
+# SECURITY: Scoped to only the specific secrets and KMS key needed by this project
+resource "aws_iam_role_policy" "ecs_task_execution_secrets" {
+  # Name the policy for identification
+  name = "${local.name_prefix}-ecs-execution-secrets-policy"
+  # Attach to the execution role
+  role = aws_iam_role.ecs_task_execution.id
+
+  # Define the permissions for Secrets Manager and KMS access
+  policy = jsonencode({
+    # Use the current IAM policy language version
+    Version = "2012-10-17"
+    # Define the permission statements
+    Statement = [
+      {
+        # Statement for Secrets Manager read access
+        Sid = "AllowSecretsManagerRead"
+        # Allow the specified actions
+        Effect = "Allow"
+        # Only allow reading secret values (not creating, updating, or deleting)
+        Action = [
+          # Retrieve the current secret value for container injection
+          "secretsmanager:GetSecretValue"
+        ]
+        # Scope to only the database secret created by this module
+        # WHY: Least privilege - the execution role should only access
+        #      the specific secrets needed for the ECTP application
+        Resource = [
+          # Reference the DB credentials secret ARN
+          aws_secretsmanager_secret.db_credentials.arn
+        ]
+      },
+      {
+        # Statement for KMS decrypt access (needed to decrypt secrets)
+        Sid = "AllowKMSDecrypt"
+        # Allow the specified action
+        Effect = "Allow"
+        # Only allow decryption (not encryption, key management, etc.)
+        Action = [
+          # Decrypt the secret value using the KMS key
+          "kms:Decrypt"
+        ]
+        # Scope to only the project KMS key
+        # WHY: The execution role should only decrypt using the project key,
+        #      not any arbitrary KMS key in the account
+        Resource = [
+          # Reference the KMS key ARN created above
+          aws_kms_key.main.arn
+        ]
+      }
+    ]
   })
 }
 
-# ECS Task Policy: Application-level permissions.
-# WHAT: Permissions that the FastAPI application needs at runtime.
-# WHY: The application may need to interact with AWS services for:
-#       1. S3: File uploads/downloads (student documents, exports)
-#       2. SES: Sending notification emails
-#       3. SSM Parameter Store: Reading configuration parameters
-#       4. ECS Execute Command: Enabling interactive debugging sessions
-# SECURITY: Each statement is narrowly scoped to specific actions and resources.
-resource "aws_iam_role_policy" "ecs_task" {
-  name = "${local.name_prefix}-ecs-task-policy"
+# =============================================================================
+# IAM ROLE - ECS TASK ROLE
+# =============================================================================
+# WHAT: The IAM role assumed by the application code running inside the
+#       container. This role determines what AWS services the ECTP FastAPI
+#       application can access at runtime.
+# WHY: Separate from the execution role because the application has different
+#      permission needs than the ECS agent. The task role should only grant
+#      access to services the application code actually calls.
+# SECURITY:
+#   - Follows strict least privilege for application-level access
+#   - No wildcard resources; each permission targets specific ARNs
+#   - Permissions can be expanded as the application needs grow
+#   - CloudTrail logs all API calls made with this role
+# =============================================================================
+resource "aws_iam_role" "ecs_task" {
+  # Name the role with the standard naming convention
+  # WHY: Clear naming distinguishes this from the execution role
+  name = "${local.name_prefix}-ecs-task-role"
+
+  # Trust policy allowing only ECS Tasks to assume this role
+  # WHY: The application container assumes this role automatically via
+  #      the ECS task definition configuration
+  # SECURITY: Only ECS Tasks service can assume this role
+  assume_role_policy = jsonencode({
+    # Use the current IAM policy language version
+    Version = "2012-10-17"
+    # Define the trust relationship
+    Statement = [
+      {
+        # Allow the AssumeRole action
+        Action = "sts:AssumeRole"
+        # Permit this action
+        Effect = "Allow"
+        # Restrict to ECS Tasks service principal
+        Principal = {
+          # Only ECS Tasks can assume this role
+          Service = "ecs-tasks.amazonaws.com"
+        }
+      }
+    ]
+  })
+
+  # Apply common tags for governance
+  tags = merge(
+    # Include all common tags
+    local.common_tags,
+    {
+      # Name tag for identification
+      Name = "${local.name_prefix}-ecs-task-role"
+    }
+  )
+}
+
+# Custom policy for application-level AWS service access
+# WHY: Grants the running application permissions to interact with
+#      specific AWS services (S3, SES, CloudWatch, etc.)
+# SECURITY: Each action and resource is explicitly listed; no wildcards
+resource "aws_iam_role_policy" "ecs_task_app_permissions" {
+  # Name the policy for identification
+  name = "${local.name_prefix}-ecs-task-app-policy"
+  # Attach to the task role (not the execution role)
   role = aws_iam_role.ecs_task.id
 
+  # Define application-level permissions
   policy = jsonencode({
+    # Use the current IAM policy language version
     Version = "2012-10-17"
+    # Define the permission statements for each service
     Statement = [
       {
-        # Allow reading application configuration from SSM Parameter Store.
-        # WHY: Non-secret configuration (feature flags, API URLs) is stored
-        #       in SSM Parameter Store for easy management.
-        # SECURITY: Read-only access; cannot modify configuration values.
-        Sid    = "AllowSSMParameterRead"
+        # Statement for CloudWatch Metrics publishing
+        Sid = "AllowCloudWatchMetrics"
+        # Allow the specified action
         Effect = "Allow"
+        # Allow publishing custom application metrics to CloudWatch
         Action = [
-          "ssm:GetParameter",
-          "ssm:GetParameters",
-          "ssm:GetParametersByPath"
+          # Publish custom metrics (API response times, error counts, etc.)
+          "cloudwatch:PutMetricData"
         ]
-        Resource = "arn:aws:ssm:${local.region}:${local.account_id}:parameter/ectp/${var.environment}/*"
-      },
-      {
-        # Allow ECS Execute Command for interactive debugging.
-        # WHY: Enables operators to shell into running containers for
-        #       troubleshooting without SSH or bastion hosts.
-        # SECURITY: Execute Command sessions are logged. This permission
-        #           should be restricted to a break-glass role in production.
-        Sid    = "AllowSSMMessaging"
-        Effect = "Allow"
-        Action = [
-          "ssmmessages:CreateControlChannel",
-          "ssmmessages:CreateDataChannel",
-          "ssmmessages:OpenControlChannel",
-          "ssmmessages:OpenDataChannel"
-        ]
+        # CloudWatch PutMetricData does not support resource-level restrictions
         Resource = "*"
+        # Condition to restrict metric namespace to the project
+        Condition = {
+          StringEquals = {
+            # Only allow publishing to the project-specific metric namespace
+            "cloudwatch:namespace" = "ECTP/${var.environment}"
+          }
+        }
       },
       {
-        # Allow KMS decryption for accessing encrypted resources.
-        # WHY: The application may need to decrypt data stored in S3 or
-        #       access encrypted SSM parameters.
-        Sid    = "AllowKMSDecrypt"
+        # Statement for Secrets Manager read access at runtime
+        Sid = "AllowSecretsManagerReadRuntime"
+        # Allow the specified actions
         Effect = "Allow"
+        # Allow reading secrets for runtime configuration refresh
         Action = [
+          # Retrieve secret values for database credentials
+          "secretsmanager:GetSecretValue",
+          # Describe secret metadata for rotation status checking
+          "secretsmanager:DescribeSecret"
+        ]
+        # Scope to only the database credentials secret
+        Resource = [
+          # Only the DB credentials secret, not all secrets in the account
+          aws_secretsmanager_secret.db_credentials.arn
+        ]
+      },
+      {
+        # Statement for KMS decrypt access for secret decryption
+        Sid = "AllowKMSDecryptRuntime"
+        # Allow decryption only
+        Effect = "Allow"
+        # Allow decrypting secrets and encrypted configuration
+        Action = [
+          # Decrypt encrypted secret values
           "kms:Decrypt",
+          # Generate data keys for client-side encryption if needed
           "kms:GenerateDataKey"
         ]
-        Resource = aws_kms_key.main.arn
-      }
-    ]
-  })
-}
-
-# =============================================================================
-# RDS ENHANCED MONITORING IAM ROLE
-# =============================================================================
-# WHAT: IAM role for RDS Enhanced Monitoring to publish OS-level metrics.
-# WHY: Enhanced Monitoring provides detailed OS metrics (CPU, memory, disk,
-#       network) at per-second granularity, which standard CloudWatch metrics
-#       do not provide.
-# SECURITY: Uses the AWS-managed policy for Enhanced Monitoring, which
-#           grants only the permissions needed to write metrics to CloudWatch.
-# =============================================================================
-resource "aws_iam_role" "rds_monitoring" {
-  name = "${local.name_prefix}-rds-monitoring-role"
-
-  # Trust policy: only the RDS monitoring service can assume this role.
-  assume_role_policy = jsonencode({
-    Version = "2012-10-17"
-    Statement = [
+        # Scope to only the project KMS key
+        Resource = [
+          # Only the project KMS key, not any key in the account
+          aws_kms_key.main.arn
+        ]
+      },
       {
-        Sid    = "AllowRDSMonitoringAssume"
+        # Statement for ECS Execute Command support (debugging)
+        Sid = "AllowSSMForExecuteCommand"
+        # Allow the specified actions
         Effect = "Allow"
-        Principal = {
-          Service = "monitoring.rds.amazonaws.com"
-        }
-        Action = "sts:AssumeRole"
+        # Allow SSM actions required for ECS Execute Command
+        Action = [
+          # Create SSM control channel for execute command sessions
+          "ssmmessages:CreateControlChannel",
+          # Create SSM data channel for session I/O
+          "ssmmessages:CreateDataChannel",
+          # Open SSM control channel for bidirectional communication
+          "ssmmessages:OpenControlChannel",
+          # Open SSM data channel for session data transfer
+          "ssmmessages:OpenDataChannel"
+        ]
+        # SSM messages do not support resource-level restrictions
+        Resource = "*"
       }
     ]
   })
+}
 
-  tags = merge(local.common_tags, {
-    Name = "${local.name_prefix}-rds-monitoring-role"
+# =============================================================================
+# SECRETS MANAGER - DATABASE CREDENTIALS
+# =============================================================================
+# WHAT: An AWS Secrets Manager secret that stores the database master password
+#       and connection details as a JSON object.
+# WHY: Secrets Manager provides:
+#      1. Encrypted storage for sensitive credentials (KMS-encrypted)
+#      2. Automatic rotation capability (rotate passwords without downtime)
+#      3. Fine-grained IAM access control (who can read the secret)
+#      4. CloudTrail audit trail (who accessed the secret and when)
+#      5. Version management for secret values (rollback capability)
+# SECURITY:
+#   - Secret value is encrypted with the project KMS key
+#   - Access is restricted via IAM policies on the execution/task roles
+#   - Secret versions enable safe rotation and rollback
+#   - CloudTrail logs every GetSecretValue call for audit
+# COMPLIANCE: FERPA requires that database credentials be stored securely
+#             and access be logged. Secrets Manager satisfies both requirements.
+# =============================================================================
+
+# Generate a random password for the database master user
+# WHY: Programmatic password generation ensures strong, unique passwords
+#      without human-generated weak passwords or password reuse
+# SECURITY: 32 characters with mixed case, numbers, and special characters
+#           provides high entropy resistance to brute-force attacks
+resource "random_password" "db_master" {
+  # Set password length to 32 characters for high entropy
+  # WHY: Longer passwords exponentially increase brute-force difficulty
+  length = 32
+
+  # Include special characters for additional complexity
+  # WHY: Special characters increase the character space for brute-force resistance
+  special = true
+
+  # Exclude characters that cause issues in connection strings and shell commands
+  # WHY: Characters like @, /, \, ", and ' can break connection string parsing
+  #      or cause shell escaping issues in scripts and container environments
+  override_special = "!#$%&*()-_=+[]{}<>:?"
+
+  # Do not use numeric-only prefix to avoid interpretation issues
+  # WHY: Some tools may truncate or misinterpret passwords starting with numbers
+  numeric = true
+
+  # Include uppercase letters for complexity
+  # WHY: Mixed case increases the character space for password strength
+  upper = true
+
+  # Include lowercase letters for complexity
+  # WHY: Required for most password policies
+  lower = true
+
+  # Minimum number of special characters required
+  # WHY: Ensures the generated password meets complexity requirements
+  min_special = 2
+
+  # Minimum number of uppercase characters
+  # WHY: Ensures mixed case for password strength
+  min_upper = 2
+
+  # Minimum number of lowercase characters
+  # WHY: Ensures variety in character types
+  min_lower = 2
+
+  # Minimum number of numeric characters
+  # WHY: Ensures digits are included for password complexity
+  min_numeric = 2
+}
+
+# Create the Secrets Manager secret (metadata container)
+# WHY: The secret resource is the metadata wrapper; the actual secret value
+#      is stored separately in a secret version (below)
+resource "aws_secretsmanager_secret" "db_credentials" {
+  # Name the secret with a hierarchical path for organization
+  # WHY: The ectp/{env}/db/credentials path makes secrets easy to find
+  #      and enables IAM policies scoped to specific paths
+  name = "${local.name_prefix}/db/credentials"
+
+  # Provide a detailed description for operators
+  # WHY: Descriptions help during audits and troubleshooting
+  description = "Database credentials for ${local.name_prefix} PostgreSQL instance - contains username, password, host, port, and database name"
+
+  # Encrypt the secret with the project KMS key
+  # WHY: Customer-managed KMS key provides:
+  #      1. Audit trail of all secret access via CloudTrail
+  #      2. Fine-grained key policy for access control
+  #      3. Key rotation independent of secret rotation
+  kms_key_id = aws_kms_key.main.arn
+
+  # Set the recovery window to 7 days for safety
+  # WHY: If a secret is accidentally deleted, it can be recovered within
+  #      this window. After the window, the secret is permanently deleted.
+  # SECURITY: 7 days balances between quick cleanup and safety
+  recovery_window_in_days = var.environment == "prod" ? 30 : 7
+
+  # Apply common tags for governance
+  tags = merge(
+    # Include all common tags
+    local.common_tags,
+    {
+      # Name tag for identification
+      Name = "${local.name_prefix}-db-credentials"
+      # Data classification tag for compliance scanning
+      DataClassification = "confidential"
+    }
+  )
+}
+
+# Store the initial secret value with database connection details
+# WHY: The secret version contains the actual JSON payload with all
+#      connection details needed by the application
+resource "aws_secretsmanager_secret_version" "db_credentials" {
+  # Associate this version with the secret created above
+  # WHY: Secret versions are stored independently from the secret metadata
+  secret_id = aws_secretsmanager_secret.db_credentials.id
+
+  # Store the database credentials as a JSON string
+  # WHY: JSON format allows storing multiple related values in a single secret:
+  #      username, password, host, port, and database name
+  # SECURITY: All values are encrypted at rest with the KMS key
+  secret_string = jsonencode({
+    # The database master username
+    username = var.db_username
+    # The generated random password (32 characters, high entropy)
+    password = random_password.db_master.result
+    # Database engine identifier for programmatic access
+    engine = "postgres"
+    # Database port (will be updated when RDS instance is created)
+    port = var.db_port
+    # Database name for connection string construction
+    dbname = var.db_name
   })
 }
 
-# Attach the AWS-managed Enhanced Monitoring policy.
-# WHY: The managed policy grants exactly the permissions needed for
-#       Enhanced Monitoring to write to CloudWatch Logs.
-# SECURITY: Using a managed policy ensures we don't accidentally over-provision.
-resource "aws_iam_role_policy_attachment" "rds_monitoring" {
-  role       = aws_iam_role.rds_monitoring.name
-  policy_arn = "arn:aws:iam::aws:policy/service-role/AmazonRDSEnhancedMonitoringRole"
+# =============================================================================
+# SECURITY GROUP - ALB TIER
+# =============================================================================
+# WHAT: Security group for the Application Load Balancer controlling inbound
+#       internet traffic and outbound traffic to the application tier.
+# WHY: The ALB is the single entry point from the internet. This security group
+#      ensures only HTTP (80) and HTTPS (443) traffic can reach the ALB,
+#      and only traffic to the container port can exit toward the app tier.
+# SECURITY:
+#   - Inbound: Only ports 80 (redirect to HTTPS) and 443 (HTTPS) from anywhere
+#   - Outbound: Only the container port to the app security group
+#   - No other ports or protocols are allowed
+#   - This is the outermost security boundary for the ECTP platform
+# =============================================================================
+resource "aws_security_group" "alb" {
+  # Name the security group with a descriptive identifier
+  # WHY: Clear naming helps operators identify the purpose during audits
+  name = "${local.name_prefix}-alb-sg"
+
+  # Provide a detailed description for documentation
+  # WHY: Descriptions appear in the AWS Console and help during security reviews
+  description = "Security group for ALB - allows HTTP/HTTPS inbound from internet, outbound to app tier only"
+
+  # Associate with the VPC where the ALB will be deployed
+  # WHY: Security groups are VPC-scoped and must match the ALB's VPC
+  vpc_id = var.vpc_id
+
+  # Apply common tags for governance
+  tags = merge(
+    # Include all common tags
+    local.common_tags,
+    {
+      # Name tag for AWS Console identification
+      Name = "${local.name_prefix}-alb-sg"
+      # Tier tag for automated security policy enforcement
+      Tier = "public"
+    }
+  )
+}
+
+# ALB Ingress Rule: Allow HTTPS (port 443) from anywhere
+# WHY: The ALB must accept HTTPS traffic from the public internet so that
+#      students, faculty, and staff can access the ECTP platform
+# SECURITY: Only port 443 with TLS encryption is the primary entry point
+resource "aws_vpc_security_group_ingress_rule" "alb_https" {
+  # Attach to the ALB security group
+  security_group_id = aws_security_group.alb.id
+  # Allow traffic from any IPv4 source (public internet)
+  cidr_ipv4 = "0.0.0.0/0"
+  # Allow only port 443 (HTTPS) for encrypted traffic
+  from_port = 443
+  # Single port (not a range)
+  to_port = 443
+  # Use TCP protocol for HTTPS connections
+  ip_protocol = "tcp"
+  # Describe the rule for audit documentation
+  description = "Allow HTTPS inbound from the internet for user access"
+  # Apply tags for governance
+  tags = merge(local.common_tags, { Name = "${local.name_prefix}-alb-https-ingress" })
+}
+
+# ALB Ingress Rule: Allow HTTP (port 80) for redirect to HTTPS
+# WHY: Users may type http:// in their browser; the ALB redirects them to HTTPS
+# SECURITY: HTTP traffic is never processed; it is immediately redirected to HTTPS
+resource "aws_vpc_security_group_ingress_rule" "alb_http" {
+  # Attach to the ALB security group
+  security_group_id = aws_security_group.alb.id
+  # Allow traffic from any IPv4 source
+  cidr_ipv4 = "0.0.0.0/0"
+  # Allow only port 80 (HTTP) for the HTTPS redirect
+  from_port = 80
+  # Single port
+  to_port = 80
+  # Use TCP protocol for HTTP connections
+  ip_protocol = "tcp"
+  # Describe the rule
+  description = "Allow HTTP inbound from the internet (redirected to HTTPS by ALB)"
+  # Apply tags
+  tags = merge(local.common_tags, { Name = "${local.name_prefix}-alb-http-ingress" })
+}
+
+# ALB Egress Rule: Allow traffic to the application tier on the container port
+# WHY: The ALB forwards decrypted traffic to ECS Fargate tasks on the container port
+# SECURITY: Egress is restricted to only the container port and only to the app SG
+resource "aws_vpc_security_group_egress_rule" "alb_to_app" {
+  # Attach to the ALB security group
+  security_group_id = aws_security_group.alb.id
+  # Allow traffic to the app security group (not a CIDR, more precise)
+  referenced_security_group_id = aws_security_group.app.id
+  # Allow only the container port for application traffic
+  from_port = var.container_port
+  # Single port
+  to_port = var.container_port
+  # Use TCP protocol
+  ip_protocol = "tcp"
+  # Describe the rule
+  description = "Allow outbound to app tier ECS tasks on container port ${var.container_port}"
+  # Apply tags
+  tags = merge(local.common_tags, { Name = "${local.name_prefix}-alb-to-app-egress" })
+}
+
+# ALB Egress Rule: Allow HTTPS outbound for health checks and AWS API calls
+# WHY: The ALB needs outbound HTTPS access for:
+#      1. Health check responses from targets
+#      2. AWS API calls for authentication/authorization
+# SECURITY: Allows HTTPS (443) outbound to any destination
+resource "aws_vpc_security_group_egress_rule" "alb_https_out" {
+  # Attach to the ALB security group
+  security_group_id = aws_security_group.alb.id
+  # Allow traffic to any destination
+  cidr_ipv4 = "0.0.0.0/0"
+  # Allow HTTPS port for outbound API calls
+  from_port = 443
+  # Single port
+  to_port = 443
+  # Use TCP protocol
+  ip_protocol = "tcp"
+  # Describe the rule
+  description = "Allow HTTPS outbound for AWS API calls and certificate validation"
+  # Apply tags
+  tags = merge(local.common_tags, { Name = "${local.name_prefix}-alb-https-egress" })
 }
 
 # =============================================================================
-# OUTPUTS
+# SECURITY GROUP - APPLICATION TIER
+# =============================================================================
+# WHAT: Security group for ECS Fargate tasks running the ECTP API application.
+# WHY: Controls which traffic can reach the application containers and what
+#      outbound connections the containers can make.
+# SECURITY:
+#   - Inbound: Only from the ALB security group on the container port
+#   - Outbound: To the database on port 5432, and HTTPS for AWS API calls
+#   - No direct internet inbound access (containers are in private subnets)
+#   - This is the middle tier in the three-tier security model
+# =============================================================================
+resource "aws_security_group" "app" {
+  # Name the security group descriptively
+  # WHY: Clear naming aids security reviews and incident response
+  name = "${local.name_prefix}-app-sg"
+
+  # Provide a detailed description
+  # WHY: Documentation in the SG description helps during audits
+  description = "Security group for ECS Fargate tasks - allows inbound from ALB only, outbound to DB and AWS services"
+
+  # Associate with the same VPC as the ECS tasks
+  # WHY: SGs must be in the same VPC as the resources they protect
+  vpc_id = var.vpc_id
+
+  # Apply common tags for governance
+  tags = merge(
+    # Include all common tags
+    local.common_tags,
+    {
+      # Name tag for identification
+      Name = "${local.name_prefix}-app-sg"
+      # Tier tag for automation
+      Tier = "private-app"
+    }
+  )
+}
+
+# App Ingress Rule: Allow traffic from ALB on the container port
+# WHY: ECS tasks receive traffic only from the ALB after TLS termination
+# SECURITY: Using SG reference ensures only the ALB can send traffic, not
+#           any resource with a matching IP address
+resource "aws_vpc_security_group_ingress_rule" "app_from_alb" {
+  # Attach to the app security group
+  security_group_id = aws_security_group.app.id
+  # Allow traffic from the ALB security group specifically
+  referenced_security_group_id = aws_security_group.alb.id
+  # Allow only the container port
+  from_port = var.container_port
+  # Single port
+  to_port = var.container_port
+  # Use TCP protocol
+  ip_protocol = "tcp"
+  # Describe the rule
+  description = "Allow inbound from ALB on container port ${var.container_port}"
+  # Apply tags
+  tags = merge(local.common_tags, { Name = "${local.name_prefix}-app-from-alb-ingress" })
+}
+
+# App Egress Rule: Allow traffic to the database on PostgreSQL port
+# WHY: The application needs to connect to PostgreSQL for data operations
+# SECURITY: Restricted to only port 5432 and only to the DB security group
+resource "aws_vpc_security_group_egress_rule" "app_to_db" {
+  # Attach to the app security group
+  security_group_id = aws_security_group.app.id
+  # Allow traffic to the database security group
+  referenced_security_group_id = aws_security_group.db.id
+  # Allow only the PostgreSQL port
+  from_port = var.db_port
+  # Single port
+  to_port = var.db_port
+  # Use TCP protocol
+  ip_protocol = "tcp"
+  # Describe the rule
+  description = "Allow outbound to database tier on PostgreSQL port ${var.db_port}"
+  # Apply tags
+  tags = merge(local.common_tags, { Name = "${local.name_prefix}-app-to-db-egress" })
+}
+
+# App Egress Rule: Allow HTTPS outbound for AWS API calls and external services
+# WHY: ECS tasks need HTTPS access for:
+#      1. Pulling container images from ECR
+#      2. Sending logs to CloudWatch
+#      3. Fetching secrets from Secrets Manager
+#      4. Calling external APIs (SIS, LMS integrations)
+# SECURITY: Port 443 to any destination is required for AWS service endpoints
+resource "aws_vpc_security_group_egress_rule" "app_https_out" {
+  # Attach to the app security group
+  security_group_id = aws_security_group.app.id
+  # Allow traffic to any destination for AWS API calls
+  cidr_ipv4 = "0.0.0.0/0"
+  # Allow HTTPS port for encrypted API communication
+  from_port = 443
+  # Single port
+  to_port = 443
+  # Use TCP protocol
+  ip_protocol = "tcp"
+  # Describe the rule
+  description = "Allow HTTPS outbound for AWS API calls (ECR, CloudWatch, Secrets Manager) and external services"
+  # Apply tags
+  tags = merge(local.common_tags, { Name = "${local.name_prefix}-app-https-egress" })
+}
+
+# App Egress Rule: Allow DNS resolution
+# WHY: ECS tasks need DNS resolution to resolve AWS service endpoints,
+#      database hostnames, and external service domains
+# SECURITY: DNS (port 53) is required for basic network functionality
+resource "aws_vpc_security_group_egress_rule" "app_dns_tcp" {
+  # Attach to the app security group
+  security_group_id = aws_security_group.app.id
+  # Allow DNS traffic to the VPC CIDR (VPC DNS resolver is at VPC+2 address)
+  cidr_ipv4 = var.vpc_cidr
+  # Allow DNS port
+  from_port = 53
+  # Single port
+  to_port = 53
+  # Use TCP protocol for DNS over TCP
+  ip_protocol = "tcp"
+  # Describe the rule
+  description = "Allow DNS resolution via TCP within the VPC"
+  # Apply tags
+  tags = merge(local.common_tags, { Name = "${local.name_prefix}-app-dns-tcp-egress" })
+}
+
+# App Egress Rule: Allow DNS resolution over UDP
+# WHY: Most DNS queries use UDP; TCP is used as fallback for large responses
+# SECURITY: Restricted to VPC CIDR to use only the VPC DNS resolver
+resource "aws_vpc_security_group_egress_rule" "app_dns_udp" {
+  # Attach to the app security group
+  security_group_id = aws_security_group.app.id
+  # Allow DNS traffic to the VPC DNS resolver
+  cidr_ipv4 = var.vpc_cidr
+  # Allow DNS port
+  from_port = 53
+  # Single port
+  to_port = 53
+  # Use UDP protocol for standard DNS queries
+  ip_protocol = "udp"
+  # Describe the rule
+  description = "Allow DNS resolution via UDP within the VPC"
+  # Apply tags
+  tags = merge(local.common_tags, { Name = "${local.name_prefix}-app-dns-udp-egress" })
+}
+
+# =============================================================================
+# SECURITY GROUP - DATABASE TIER
+# =============================================================================
+# WHAT: Security group for the RDS PostgreSQL instance controlling database access.
+# WHY: Restricts database access to only the application security group on port 5432.
+#      This is the innermost security boundary protecting sensitive data.
+# SECURITY:
+#   - Inbound: Only from the app security group on port 5432
+#   - Outbound: All outbound for RDS managed operations (backups, monitoring)
+#   - No public access, no access from ALB or internet
+#   - Defense in depth: even if the app tier is compromised, the attacker
+#     must have valid database credentials to access data
+# =============================================================================
+resource "aws_security_group" "db" {
+  # Name the security group descriptively
+  # WHY: Clear naming for security reviews and compliance audits
+  name = "${local.name_prefix}-db-sg"
+
+  # Provide a detailed description
+  # WHY: Descriptions document the purpose and access patterns
+  description = "Security group for RDS PostgreSQL - allows inbound from app tier only on port 5432"
+
+  # Associate with the VPC
+  # WHY: Must match the VPC where the RDS instance is deployed
+  vpc_id = var.vpc_id
+
+  # Apply common tags
+  tags = merge(
+    # Include all common tags
+    local.common_tags,
+    {
+      # Name tag for identification
+      Name = "${local.name_prefix}-db-sg"
+      # Tier tag for automation and compliance scanning
+      Tier = "private-data"
+      # Data classification for compliance tools
+      DataClassification = "confidential"
+    }
+  )
+}
+
+# DB Ingress Rule: Allow PostgreSQL traffic from the application tier
+# WHY: Only ECS Fargate tasks in the app tier should connect to the database
+# SECURITY: SG-to-SG reference is more secure than CIDR-based rules because
+#           it dynamically tracks security group membership
+resource "aws_vpc_security_group_ingress_rule" "db_from_app" {
+  # Attach to the database security group
+  security_group_id = aws_security_group.db.id
+  # Allow traffic from the application security group
+  referenced_security_group_id = aws_security_group.app.id
+  # Allow only PostgreSQL port 5432
+  from_port = var.db_port
+  # Single port
+  to_port = var.db_port
+  # Use TCP protocol for PostgreSQL connections
+  ip_protocol = "tcp"
+  # Describe the rule for audit documentation
+  description = "Allow PostgreSQL connections from application tier ECS tasks"
+  # Apply tags
+  tags = merge(local.common_tags, { Name = "${local.name_prefix}-db-from-app-ingress" })
+}
+
+# DB Egress Rule: Allow all outbound for RDS managed operations
+# WHY: RDS needs outbound connectivity for:
+#      1. Sending Enhanced Monitoring metrics to CloudWatch
+#      2. Uploading backups and snapshots to S3
+#      3. Communicating with AWS service endpoints for patching
+# SECURITY: Outbound from RDS is low-risk as the database engine does not
+#           initiate arbitrary connections. AWS manages outbound operations.
+resource "aws_vpc_security_group_egress_rule" "db_all_outbound" {
+  # Attach to the database security group
+  security_group_id = aws_security_group.db.id
+  # Allow traffic to any destination for AWS managed operations
+  cidr_ipv4 = "0.0.0.0/0"
+  # Allow all protocols (AWS managed operations use various protocols)
+  ip_protocol = "-1"
+  # Describe the rule
+  description = "Allow all outbound for RDS managed operations (backups, monitoring, patching)"
+  # Apply tags
+  tags = merge(local.common_tags, { Name = "${local.name_prefix}-db-egress-all" })
+}
+
+# =============================================================================
+# OUTPUTS - Values exported for use by other modules
 # =============================================================================
 
+# Output the KMS key ARN for use by other modules requiring encryption
 output "kms_key_arn" {
-  description = "ARN of the customer-managed KMS key for encrypting all ECTP data at rest."
-  value       = aws_kms_key.main.arn
+  # Document the purpose of this output
+  description = "ARN of the customer-managed KMS key for encrypting data at rest across all ECTP services"
+  # Reference the KMS key ARN
+  value = aws_kms_key.main.arn
 }
 
+# Output the KMS key ID for services that accept key ID instead of ARN
 output "kms_key_id" {
-  description = "ID of the customer-managed KMS key."
-  value       = aws_kms_key.main.key_id
+  # Document the key ID output
+  description = "The ID of the customer-managed KMS key (UUID format)"
+  # Reference the key ID
+  value = aws_kms_key.main.key_id
 }
 
-output "alb_security_group_id" {
-  description = "Security group ID for the ALB. Attach to the Application Load Balancer."
-  value       = aws_security_group.alb.id
+# Output the KMS key alias for human-readable references
+output "kms_key_alias" {
+  # Document the alias output
+  description = "The alias of the KMS key (alias/ectp-{env}-key format)"
+  # Reference the alias name
+  value = aws_kms_alias.main.name
 }
 
-output "ecs_tasks_security_group_id" {
-  description = "Security group ID for ECS Fargate tasks. Attach to ECS service network configuration."
-  value       = aws_security_group.ecs_tasks.id
+# Output the ECS task execution role ARN for the compute module
+output "ecs_task_execution_role_arn" {
+  # Document the execution role ARN output
+  description = "ARN of the ECS task execution role (for image pull, log write, secret fetch)"
+  # Reference the execution role ARN
+  value = aws_iam_role.ecs_task_execution.arn
 }
 
-output "database_security_group_id" {
-  description = "Security group ID for the RDS database. Attach to the RDS instance."
-  value       = aws_security_group.database.id
-}
-
-output "ecs_execution_role_arn" {
-  description = "ARN of the ECS task execution role (used by ECS agent for image pull, logs, and secrets)."
-  value       = aws_iam_role.ecs_execution.arn
-}
-
+# Output the ECS task role ARN for the compute module
 output "ecs_task_role_arn" {
-  description = "ARN of the ECS task role (used by application code for AWS service access)."
-  value       = aws_iam_role.ecs_task.arn
+  # Document the task role ARN output
+  description = "ARN of the ECS task role (for application-level AWS API access)"
+  # Reference the task role ARN
+  value = aws_iam_role.ecs_task.arn
 }
 
-output "rds_monitoring_role_arn" {
-  description = "ARN of the RDS Enhanced Monitoring role."
-  value       = aws_iam_role.rds_monitoring.arn
+# Output the Secrets Manager secret ARN for the database and compute modules
+output "db_secret_arn" {
+  # Document the secret ARN output
+  description = "ARN of the Secrets Manager secret containing database credentials"
+  # Reference the secret ARN
+  value = aws_secretsmanager_secret.db_credentials.arn
+}
+
+# Output the generated database password for the database module
+output "db_master_password" {
+  # Document that this is sensitive and should not be logged
+  description = "The generated master password for the RDS instance (sensitive)"
+  # Reference the generated password
+  value = random_password.db_master.result
+  # Mark as sensitive to prevent display in terraform output
+  sensitive = true
+}
+
+# Output the ALB security group ID for the compute module
+output "alb_security_group_id" {
+  # Document the ALB SG output
+  description = "Security group ID for the Application Load Balancer"
+  # Reference the ALB security group ID
+  value = aws_security_group.alb.id
+}
+
+# Output the application security group ID for the compute module
+output "app_security_group_id" {
+  # Document the app SG output
+  description = "Security group ID for ECS Fargate application tasks"
+  # Reference the app security group ID
+  value = aws_security_group.app.id
+}
+
+# Output the database security group ID for the database module
+output "db_security_group_id" {
+  # Document the DB SG output
+  description = "Security group ID for the RDS PostgreSQL database instance"
+  # Reference the DB security group ID
+  value = aws_security_group.db.id
 }
