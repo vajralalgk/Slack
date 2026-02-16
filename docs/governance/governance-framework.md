@@ -1,617 +1,315 @@
-<div align="center">
+# Enterprise Cloud Transformation Platform (ECTP)
+# Governance Framework
 
-# ECTP Governance Framework
-
-### Enterprise Cloud Transformation Platform
-
-&nbsp;
-
-![Version](https://img.shields.io/badge/Version-1.0.0-blue?style=for-the-badge)
-![Status](https://img.shields.io/badge/Status-Active-brightgreen?style=for-the-badge)
-![Classification](https://img.shields.io/badge/Classification-Internal-orange?style=for-the-badge)
-![Review](https://img.shields.io/badge/Review_Cycle-Quarterly-purple?style=for-the-badge)
-
-&nbsp;
-
-| Document Control | |
-|:---|:---|
-| **Author** | Gopi Krishna Vajrala |
-| **Date** | 2026-02-16 |
-| **Version** | 1.0.0 |
-| **Classification** | Internal |
-| **Last Reviewed** | 2026-02-16 |
-| **Next Review** | 2026-05-16 |
-| **Approved By** | Executive Steering Committee |
-
-</div>
+**Document ID:** ECTP-GOV-001
+**Author:** Gopi Krishna Vajrala
+**Version:** 2.0.0
+**Date:** 2026-02-16
+**Classification:** Internal - Confidential
+**Status:** Approved
 
 ---
-
-&nbsp;
-
-## Table of Contents
-
-| # | Section | Domain |
-|:-:|:--------|:-------|
-| 1 | [Governance Structure](#-1-governance-structure) | Organizational Hierarchy |
-| 2 | [Change Management](#-2-change-management) | Process & Controls |
-| 3 | [Cost Governance](#-3-cost-governance) | Financial Oversight |
-| 4 | [Security Governance](#-4-security-governance) | Security & Compliance |
-| 5 | [Architecture Decision Records](#-5-architecture-decision-records-adr) | Technical Governance |
-| 6 | [SLA Governance](#-6-sla-governance) | Service Levels |
-| 7 | [Risk Management](#-7-risk-management) | Risk & Mitigation |
-
----
-
-&nbsp;
-
-## :classical_building: 1. Governance Structure
-
-> **:bulb: Governance Philosophy**
-> Our governance model follows a tiered structure that balances strategic oversight with operational agility. Each tier has clearly defined authority, cadence, and accountability to ensure efficient decision-making across the enterprise cloud platform.
-
-&nbsp;
-
-### Governance Hierarchy
-
-```
-╔══════════════════════════════════════════════════════════════════════════╗
-║                                                                          ║
-║   ┌──────────────────────────────────────────────────────────────────┐   ║
-║   │          EXECUTIVE STEERING COMMITTEE  (Quarterly)               │   ║
-║   │   CIO  ·  CFO  ·  VP Academic Affairs  ·  VP Student Services    │   ║
-║   │          Strategic Direction · Budget · Risk Acceptance           │   ║
-║   └────────────────────────────┬─────────────────────────────────────┘   ║
-║                                │                                         ║
-║                                ▼                                         ║
-║   ┌──────────────────────────────────────────────────────────────────┐   ║
-║   │           PLATFORM GOVERNANCE BOARD  (Monthly)                   │   ║
-║   │   IT Director · Cloud Architect · Security Lead · Compliance     │   ║
-║   │     Architecture Decisions · Policy · Roadmap Prioritization     │   ║
-║   └────────────────────────────┬─────────────────────────────────────┘   ║
-║                                │                                         ║
-║                                ▼                                         ║
-║   ┌──────────────────────────────────────────────────────────────────┐   ║
-║   │        CLOUD CENTER OF EXCELLENCE - CCoE  (Weekly)               │   ║
-║   │       Cloud Engineers · Developers · SRE Team                    │   ║
-║   │    Operations · Technical Decisions · Standards Enforcement       │   ║
-║   └──────┬─────────────────────┬─────────────────────┬───────────────┘   ║
-║          │                     │                     │                   ║
-║          ▼                     ▼                     ▼                   ║
-║   ┌──────────────┐   ┌─────────────────┐   ┌────────────────────┐       ║
-║   │  :shield: Security   │   │  :moneybag: Cost Review  │   │  :arrows_counterclockwise: Change Advisory  │       ║
-║   │  Review Board  │   │     Board       │   │      Board         │       ║
-║   └──────────────┘   └─────────────────┘   └────────────────────┘       ║
-║                                                                          ║
-╚══════════════════════════════════════════════════════════════════════════╝
-```
-
-&nbsp;
-
-<details>
-<summary><strong>:star: Executive Steering Committee</strong> — Strategic Leadership & Oversight</summary>
-
-&nbsp;
-
-| Attribute | Details |
-|:----------|:--------|
-| **Members** | CIO, CFO, VP Academic Affairs, VP Student Services |
-| **Cadence** | :calendar: Quarterly |
-| **Authority Level** | :red_circle: Highest — Strategic & Budgetary |
-| **Responsibilities** | Strategic direction, budget approval, risk acceptance |
-
-> **:clipboard: Key Decisions Made at This Level:**
-> - Annual cloud strategy and roadmap approval
-> - Capital expenditure and budget allocation
-> - Enterprise-level risk acceptance
-> - Organizational change authorization
-
-&nbsp;
-
-</details>
-
-<details>
-<summary><strong>:gear: Platform Governance Board</strong> — Architecture & Policy Governance</summary>
-
-&nbsp;
-
-| Attribute | Details |
-|:----------|:--------|
-| **Members** | IT Director, Cloud Architect, Security Lead, Compliance Officer |
-| **Cadence** | :calendar: Monthly |
-| **Authority Level** | :orange_circle: High — Architecture & Policy |
-| **Responsibilities** | Architecture decisions, policy enforcement, roadmap prioritization |
-
-> **:clipboard: Key Decisions Made at This Level:**
-> - Architecture standards and patterns
-> - Technology selection and approval
-> - Compliance policy enforcement
-> - Feature and initiative prioritization
-
-&nbsp;
-
-</details>
-
-<details>
-<summary><strong>:rocket: Cloud Center of Excellence (CCoE)</strong> — Operational Excellence</summary>
-
-&nbsp;
-
-| Attribute | Details |
-|:----------|:--------|
-| **Members** | Cloud engineers, developers, SRE team |
-| **Cadence** | :calendar: Weekly |
-| **Authority Level** | :yellow_circle: Operational — Day-to-Day |
-| **Responsibilities** | Day-to-day operations, technical decisions, standards enforcement |
-
-> **:clipboard: Key Decisions Made at This Level:**
-> - Implementation approaches and technical solutions
-> - Operational runbook updates
-> - Standards compliance enforcement
-> - Incident management and resolution
-
-&nbsp;
-
-</details>
-
----
-
-&nbsp;
-
-## :arrows_counterclockwise: 2. Change Management
-
-> **:warning: Change Management Policy**
-> All changes to the cloud platform must follow the established change management process. Unauthorized changes are subject to rollback and formal review. This policy ensures stability, traceability, and compliance across the platform.
-
-&nbsp;
-
-### Change Classification Matrix
-
-<table>
-<tr>
-<th width="20%">Change Type</th>
-<th width="20%">Approval</th>
-<th width="20%">Lead Time</th>
-<th width="20%">Risk Assessment</th>
-<th width="20%">Indicator</th>
-</tr>
-<tr>
-<td><strong>:white_check_mark: Standard</strong></td>
-<td>Pre-approved</td>
-<td>None</td>
-<td>Low</td>
-<td>
-
-![Low](https://img.shields.io/badge/Risk-Low-brightgreen?style=flat-square)
-
-</td>
-</tr>
-<tr>
-<td><strong>:large_blue_circle: Normal</strong></td>
-<td>Change Board</td>
-<td>5 business days</td>
-<td>Medium</td>
-<td>
-
-![Medium](https://img.shields.io/badge/Risk-Medium-yellow?style=flat-square)
-
-</td>
-</tr>
-<tr>
-<td><strong>:red_circle: Emergency</strong></td>
-<td>IT Director</td>
-<td>Immediate</td>
-<td>Post-change review</td>
-<td>
-
-![High](https://img.shields.io/badge/Risk-High-red?style=flat-square)
-
-</td>
-</tr>
-</table>
-
-&nbsp;
-
-### Change Management Process
-
-```
- ┌─────────────┐    ┌────────────────┐    ┌──────────────┐    ┌──────────┐
- │  1. SUBMIT   │───▶│  2. ASSESS     │───▶│  3. REVIEW   │───▶│ 4. APPROVE│
- │   Change     │    │  Impact & Risk │    │  Impl. Plan  │    │  per Type │
- │  (ServiceNow)│    │  Scoring       │    │  Peer Review │    │           │
- └─────────────┘    └────────────────┘    └──────────────┘    └─────┬────┘
-                                                                     │
- ┌─────────────┐    ┌────────────────┐    ┌──────────────┐          │
- │  7. CLOSE    │◀──│  6. VALIDATE   │◀──│  5. IMPLEMENT│◀─────────┘
- │   with       │    │   Post-Impl    │    │  Maintenance │
- │  Evidence    │    │   Validation   │    │   Window     │
- └─────────────┘    └────────────────┘    └──────────────┘
-```
-
-| Step | Action | Details |
-|:----:|:-------|:-------|
-| **1** | Submit change request | Via ServiceNow change management module |
-| **2** | Impact assessment | Risk scoring and dependency analysis |
-| **3** | Peer review | Implementation plan reviewed by engineering peers |
-| **4** | Approval | Per change type classification (see matrix above) |
-| **5** | Implementation | During approved maintenance window |
-| **6** | Validation | Post-implementation testing and verification |
-| **7** | Closure | Close change request with supporting evidence |
-
----
-
-&nbsp;
-
-## :dollar: 3. Cost Governance
-
-> **:moneybag: Financial Accountability**
-> Every cloud resource has an owner, and every owner has a budget. Cost transparency is not optional — it is foundational to our governance model. Department heads are accountable for their cloud spend, with automated enforcement and monthly reporting.
-
-&nbsp;
-
-<table>
-<tr>
-<th width="5%">:pushpin:</th>
-<th width="30%">Policy Area</th>
-<th width="65%">Details</th>
-</tr>
-<tr>
-<td>:bust_in_silhouette:</td>
-<td><strong>Budget Ownership</strong></td>
-<td>Department heads own their cost allocation</td>
-</tr>
-<tr>
-<td>:label:</td>
-<td><strong>Tagging Enforcement</strong></td>
-<td>All resources must have mandatory tags (automated enforcement)</td>
-</tr>
-<tr>
-<td>:bell:</td>
-<td><strong>Alert Thresholds</strong></td>
-<td><code>50%</code> :yellow_circle: Warning · <code>80%</code> :orange_circle: Escalation · <code>100%</code> :red_circle: Critical</td>
-</tr>
-<tr>
-<td>:bar_chart:</td>
-<td><strong>Monthly Reviews</strong></td>
-<td>Cost review meeting with department heads</td>
-</tr>
-<tr>
-<td>:mag:</td>
-<td><strong>Optimization Cadence</strong></td>
-<td>Quarterly right-sizing and Reserved Instance review</td>
-</tr>
-<tr>
-<td>:page_facing_up:</td>
-<td><strong>Showback Reports</strong></td>
-<td>Monthly reports distributed to department heads</td>
-</tr>
-</table>
-
-&nbsp;
-
-### Budget Alert Escalation Path
-
-```
-  ┌─────────────────────────────────────────────────────────────────────┐
-  │                     BUDGET UTILIZATION ALERTS                       │
-  ├──────────┬──────────────────────┬───────────────────────────────────┤
-  │  50%     │  :yellow_circle: Warning             │  Notification to team lead          │
-  │  80%     │  :orange_circle: Escalation          │  Notification to department head    │
-  │  100%    │  :red_circle: Critical            │  Auto-alert to IT Director & CFO   │
-  └──────────┴──────────────────────┴───────────────────────────────────┘
-```
-
----
-
-&nbsp;
-
-## :shield: 4. Security Governance
-
-> **:lock: Security-First Mandate**
-> Security is embedded in every layer of the cloud platform. From automated daily scanning to quarterly penetration testing, our security governance ensures continuous protection, rapid incident response, and full regulatory compliance.
-
-&nbsp;
-
-<table>
-<tr>
-<th width="5%">:pushpin:</th>
-<th width="25%">Security Domain</th>
-<th width="30%">Cadence</th>
-<th width="40%">Details</th>
-</tr>
-<tr>
-<td>:mag:</td>
-<td><strong>Vulnerability Scanning</strong></td>
-<td>
-
-![Daily](https://img.shields.io/badge/Cadence-Daily-blue?style=flat-square)
-
-</td>
-<td>Automated scans via AWS Inspector & GuardDuty</td>
-</tr>
-<tr>
-<td>:dart:</td>
-<td><strong>Penetration Testing</strong></td>
-<td>
-
-![Quarterly](https://img.shields.io/badge/Cadence-Quarterly-purple?style=flat-square)
-
-</td>
-<td>External firm engagement</td>
-</tr>
-<tr>
-<td>:key:</td>
-<td><strong>Access Reviews</strong></td>
-<td>
-
-![Quarterly](https://img.shields.io/badge/Cadence-Quarterly-purple?style=flat-square)
-
-</td>
-<td>IAM access certification and recertification</td>
-</tr>
-<tr>
-<td>:rotating_light:</td>
-<td><strong>Incident Response</strong></td>
-<td>
-
-![Continuous](https://img.shields.io/badge/Response-<_15_min_P1-red?style=flat-square)
-
-</td>
-<td>Documented playbooks with < 15 min response for P1</td>
-</tr>
-<tr>
-<td>:white_check_mark:</td>
-<td><strong>Compliance Monitoring</strong></td>
-<td>
-
-![Continuous](https://img.shields.io/badge/Cadence-Continuous-brightgreen?style=flat-square)
-
-</td>
-<td>AWS Config and Security Hub continuous monitoring</td>
-</tr>
-<tr>
-<td>:mortar_board:</td>
-<td><strong>Security Training</strong></td>
-<td>
-
-![Annual/Quarterly](https://img.shields.io/badge/Cadence-Annual_|_Quarterly-teal?style=flat-square)
-
-</td>
-<td>Annual for all IT staff, quarterly for developers</td>
-</tr>
-</table>
-
-&nbsp;
-
-### Security Incident Severity & Response
-
-```
-  ╔════════════╦═══════════════════════════╦══════════════════════════════╗
-  ║  Severity  ║  Response Time            ║  Notification               ║
-  ╠════════════╬═══════════════════════════╬══════════════════════════════╣
-  ║  P1 :red_circle:    ║  < 15 minutes              ║  CIO + Security + SRE       ║
-  ║  P2 :orange_circle: ║  < 1 hour                  ║  Security Lead + SRE        ║
-  ║  P3 :yellow_circle: ║  < 4 hours                 ║  Security Team              ║
-  ║  P4        ║  Next business day         ║  Ticket assignment           ║
-  ╚════════════╩═══════════════════════════╩══════════════════════════════╝
-```
-
----
-
-&nbsp;
-
-## :pencil: 5. Architecture Decision Records (ADR)
-
-> **:bulb: Architectural Governance**
-> All significant architecture decisions must be documented as ADRs to maintain a clear record of technical choices, their rationale, and their implications. This ensures institutional knowledge is preserved and decisions can be revisited with full context.
-
-&nbsp;
-
-| Attribute | Details |
-|:----------|:--------|
-| **Template Location** | `/docs/adr/` |
-| **Review Board** | Platform Governance Board |
-| **Retention** | Permanent — all ADRs are immutable once accepted |
-
-&nbsp;
-
-### ADR Lifecycle
-
-```
-  ┌────────────┐     ┌────────────┐     ┌─────────────────┐     ┌────────────┐
-  │  PROPOSE   │────▶│   REVIEW   │────▶│ ACCEPT / REJECT │────▶│  DOCUMENT  │
-  │            │     │            │     │                 │     │            │
-  │  Author    │     │ Governance │     │   Board Vote    │     │  Publish   │
-  │  drafts    │     │   Board    │     │                 │     │  to repo   │
-  └────────────┘     └────────────┘     └─────────────────┘     └────────────┘
-```
-
----
-
-&nbsp;
-
-## :chart_with_upwards_trend: 6. SLA Governance
-
-> **:dart: Service Level Commitments**
-> Service Level Agreements are tiered based on business criticality. Each tier defines availability targets, recovery objectives, and review cadences. SLA compliance is monitored continuously and reported monthly to the Governance Board.
-
-&nbsp;
-
-<table>
-<tr>
-<th width="20%">Service Tier</th>
-<th width="15%">Availability</th>
-<th width="15%">RTO</th>
-<th width="15%">RPO</th>
-<th width="15%">Review</th>
-<th width="20%">Indicator</th>
-</tr>
-<tr>
-<td><strong>Tier 1</strong> — Critical</td>
-<td><code>99.95%</code></td>
-<td>15 min</td>
-<td>0</td>
-<td>Monthly</td>
-<td>
-
-![Critical](https://img.shields.io/badge/Tier_1-Critical-red?style=flat-square)
-
-</td>
-</tr>
-<tr>
-<td><strong>Tier 2</strong> — Important</td>
-<td><code>99.9%</code></td>
-<td>1 hour</td>
-<td>15 min</td>
-<td>Monthly</td>
-<td>
-
-![Important](https://img.shields.io/badge/Tier_2-Important-orange?style=flat-square)
-
-</td>
-</tr>
-<tr>
-<td><strong>Tier 3</strong> — Standard</td>
-<td><code>99.5%</code></td>
-<td>4 hours</td>
-<td>1 hour</td>
-<td>Quarterly</td>
-<td>
-
-![Standard](https://img.shields.io/badge/Tier_3-Standard-yellow?style=flat-square)
-
-</td>
-</tr>
-<tr>
-<td><strong>Tier 4</strong> — Non-Critical</td>
-<td><code>99.0%</code></td>
-<td>24 hours</td>
-<td>24 hours</td>
-<td>Quarterly</td>
-<td>
-
-![Non-Critical](https://img.shields.io/badge/Tier_4-Non--Critical-blue?style=flat-square)
-
-</td>
-</tr>
-</table>
-
-&nbsp;
-
-### SLA Comparison at a Glance
-
-```
-  Availability Targets
-  ─────────────────────────────────────────────────────────────
-  Tier 1 ████████████████████████████████████████████████ 99.95%
-  Tier 2 ███████████████████████████████████████████████  99.9%
-  Tier 3 ████████████████████████████████████████████     99.5%
-  Tier 4 ████████████████████████████████████████         99.0%
-  ─────────────────────────────────────────────────────────────
-           96%    97%    98%    99%   99.5%  99.9% 99.95%
-```
-
----
-
-&nbsp;
-
-## :warning: 7. Risk Management
-
-> **:rotating_light: Risk Governance Policy**
-> Proactive risk management is essential to the success of the cloud transformation. All risks are identified, assessed, mitigated, and tracked through a formal risk management process with clear ownership and escalation paths.
-
-&nbsp;
-
-<table>
-<tr>
-<th width="5%">:pushpin:</th>
-<th width="25%">Risk Activity</th>
-<th width="20%">Cadence</th>
-<th width="50%">Details</th>
-</tr>
-<tr>
-<td>:open_book:</td>
-<td><strong>Risk Register</strong></td>
-<td>Continuous</td>
-<td>Maintained in project documentation — living document</td>
-</tr>
-<tr>
-<td>:calendar:</td>
-<td><strong>Risk Reviews</strong></td>
-<td>Monthly</td>
-<td>Reviewed at Platform Governance Board meetings</td>
-</tr>
-<tr>
-<td>:triangular_ruler:</td>
-<td><strong>Risk Scoring</strong></td>
-<td>Per Assessment</td>
-<td>Likelihood x Impact matrix (1-5 scale)</td>
-</tr>
-<tr>
-<td>:white_check_mark:</td>
-<td><strong>Mitigation Tracking</strong></td>
-<td>Continuous</td>
-<td>Assigned owners with due dates and status tracking</td>
-</tr>
-<tr>
-<td>:arrow_up:</td>
-<td><strong>Escalation</strong></td>
-<td>As Needed</td>
-<td>Critical risks escalated to Executive Steering Committee</td>
-</tr>
-</table>
-
-&nbsp;
-
-### Risk Scoring Matrix
-
-```
-  ╔═══════════════════════════════════════════════════════════════════╗
-  ║                    RISK SCORING MATRIX (L x I)                   ║
-  ╠═══════════╦═══════════╦═══════════╦═══════════╦═══════════╦══════╣
-  ║           ║ Impact 1  ║ Impact 2  ║ Impact 3  ║ Impact 4  ║  5   ║
-  ║           ║  Minimal  ║   Low     ║  Medium   ║   High    ║ Crit ║
-  ╠═══════════╬═══════════╬═══════════╬═══════════╬═══════════╬══════╣
-  ║ Likely  5 ║     5     ║    10     ║    15     ║    20     ║  25  ║
-  ║ Probable4 ║     4     ║     8     ║    12     ║    16     ║  20  ║
-  ║ Possible3 ║     3     ║     6     ║     9     ║    12     ║  15  ║
-  ║ Unlikely2 ║     2     ║     4     ║     6     ║     8     ║  10  ║
-  ║ Rare    1 ║     1     ║     2     ║     3     ║     4     ║   5  ║
-  ╠═══════════╩═══════════╩═══════════╩═══════════╩═══════════╩══════╣
-  ║  :green_circle: 1-4 Low  :yellow_circle: 5-9 Medium  :orange_circle: 10-15 High  :red_circle: 16-25 Critical  ║
-  ╚═══════════════════════════════════════════════════════════════════╝
-```
-
----
-
-&nbsp;
-
-<div align="center">
 
 ## Document Control
 
-&nbsp;
-
-| Version | Date | Author | Change Description |
-|:-------:|:----:|:------:|:-------------------|
-| 1.0.0 | 2026-02-16 | Gopi Krishna Vajrala | Initial governance framework |
-
-&nbsp;
+| Version | Date | Author | Changes |
+|---------|------|--------|---------|
+| 2.0.0 | 2026-02-16 | Gopi Krishna Vajrala | Comprehensive governance framework |
+| 1.0.0 | 2026-02-16 | Gopi Krishna Vajrala | Initial release |
 
 ---
 
-&nbsp;
+## 1. Governance Structure
 
-**ECTP Governance Framework** · Version 1.0.0
+### 1.1 IT Steering Committee
 
-**Author:** Gopi Krishna Vajrala
+| Attribute | Detail |
+|-----------|--------|
+| **Purpose** | Strategic oversight, budget approval, priority alignment |
+| **Chair** | CIO |
+| **Members** | VP of IT, CFO, CISO, Provost representative |
+| **Cadence** | Quarterly |
+| **Authority** | Budget approval >$100K, strategic direction changes |
 
-*This document is subject to the ECTP document control policy.*
-*Unauthorized distribution is prohibited.*
+### 1.2 Cloud Governance Board
 
-&nbsp;
+| Attribute | Detail |
+|-----------|--------|
+| **Purpose** | Technical governance, architecture review, policy enforcement |
+| **Chair** | Gopi Krishna Vajrala (Platform Architect) |
+| **Members** | Cloud Architect, Security Lead, DBA Lead, DevOps Lead, FinOps Analyst |
+| **Cadence** | Bi-weekly |
+| **Authority** | Architecture decisions, technology selection, policy updates |
 
-![Footer](https://img.shields.io/badge/ECTP-Governance_Framework-blue?style=for-the-badge&logo=amazonaws)
-![Confidential](https://img.shields.io/badge/Internal-Document-gray?style=for-the-badge)
+### 1.3 Cloud Center of Excellence (CCoE)
 
-</div>
+| Attribute | Detail |
+|-----------|--------|
+| **Purpose** | Establish cloud best practices, provide guidance, drive adoption |
+| **Lead** | Gopi Krishna Vajrala |
+| **Members** | Cloud engineers, security engineers, DevOps engineers |
+| **Cadence** | Weekly stand-up, monthly deep-dive |
+| **Deliverables** | Reference architectures, training materials, governance policies |
+
+**CCoE Responsibilities:**
+- Define and maintain cloud architecture standards
+- Publish and update Infrastructure as Code templates
+- Conduct architecture reviews for new workloads
+- Provide training and enablement for development teams
+- Track and report cloud adoption KPIs
+- Maintain the governance framework and policy documents
+
+---
+
+## 2. Decision-Making Processes
+
+### 2.1 Decision Matrix (RACI)
+
+| Decision Type | CIO | Governance Board | CCoE | Project Team |
+|--------------|-----|-----------------|------|-------------|
+| Budget >$100K | A | C | I | R |
+| Architecture change | I | A | R | C |
+| Technology selection | I | A | R | C |
+| Security policy | I | A | R | I |
+| Production deployment | I | C | C | R/A |
+| Vendor selection | A | R | C | I |
+
+**Legend:** R=Responsible, A=Accountable, C=Consulted, I=Informed
+
+### 2.2 Decision Escalation Path
+
+```
+Project Team --> CCoE --> Governance Board --> Steering Committee --> CIO
+    (Technical)    (Review)    (Approval)        (Strategic)       (Final)
+```
+
+---
+
+## 3. Change Management Policy
+
+### 3.1 Change Categories
+
+| Category | Description | Approval | Lead Time |
+|----------|-----------|----------|-----------|
+| **Standard** | Pre-approved, low-risk, repeatable | Pre-approved by Governance Board | None (auto) |
+| **Normal** | Planned change, moderate risk | Governance Board | 5 business days |
+| **Emergency** | Unplanned, critical fix required | IT Director (verbal) + retroactive | Immediate |
+| **Major** | High risk, significant impact | Steering Committee | 10 business days |
+
+### 3.2 Change Management Process
+
+1. **Initiation:** Requestor submits ServiceNow change request (RFC)
+2. **Assessment:** Change manager evaluates risk, impact, and rollback plan
+3. **Review:** Appropriate approval body reviews based on category
+4. **Scheduling:** Change scheduled within approved maintenance window
+5. **Implementation:** Change executed with monitoring
+6. **Validation:** Post-implementation testing against validation checklist
+7. **Closure:** ServiceNow ticket closed with outcomes documented
+
+### 3.3 Change Freeze Periods
+
+| Period | Dates | Rationale |
+|--------|-------|-----------|
+| Fall enrollment | August 15 - September 15 | Peak registration traffic |
+| Spring enrollment | January 2 - January 31 | Spring registration |
+| Financial aid processing | March 1 - March 31 | FAFSA processing peak |
+| Commencement | May 1 - May 15 | Graduation ceremonies |
+| Year-end close | December 15 - January 2 | Financial year-end |
+
+---
+
+## 4. Cost Governance Policy
+
+### 4.1 Budget Structure
+
+| Category | Monthly Budget | Alert Threshold | Approval Authority |
+|----------|---------------|-----------------|-------------------|
+| Compute (ECS/EC2) | $15,000 | >110% | Governance Board |
+| Database (RDS) | $8,000 | >110% | DBA Lead |
+| Storage (S3/EBS) | $3,000 | >120% | Cloud Architect |
+| Networking | $2,000 | >120% | Cloud Architect |
+| Monitoring | $1,500 | >130% | DevOps Lead |
+| Other AWS services | $2,500 | >120% | Governance Board |
+| **Total** | **$32,000** | **>110%** | **Steering Committee** |
+
+### 4.2 Cost Controls
+
+- **Tagging Policy:** All resources must be tagged with: `project=ectp`, `environment`, `owner`, `cost-center`
+- **Budget Alerts:** Automated alerts at 75%, 90%, 100%, and 110% of budget
+- **Reserved Instances:** 1-year RI for production workloads (reviewed quarterly)
+- **Right-sizing:** Monthly review of underutilized resources via AWS Cost Explorer
+- **Savings Plans:** Compute savings plans for predictable workloads
+- **Resource Cleanup:** Automated detection and notification of unused resources
+
+### 4.3 Cost Reporting
+
+| Report | Audience | Frequency | Delivered By |
+|--------|----------|-----------|-------------|
+| Daily cost summary | Cloud Operations | Daily | Automated (Slack) |
+| Weekly cost breakdown | Governance Board | Weekly | FinOps Analyst |
+| Monthly cost report | Steering Committee | Monthly | FinOps Analyst |
+| Quarterly optimization | CIO | Quarterly | Gopi Krishna Vajrala |
+
+---
+
+## 5. Security Governance Policy
+
+### 5.1 Security Controls
+
+| Control | Implementation | Monitoring | Review Cycle |
+|---------|---------------|------------|-------------|
+| Identity & Access | AWS IAM, SSO, MFA required | CloudTrail, Access Analyzer | Quarterly |
+| Encryption at rest | KMS (AES-256) for all data stores | AWS Config rules | Annual |
+| Encryption in transit | TLS 1.3 enforced | Certificate monitoring | Continuous |
+| Network security | VPC, Security Groups, WAF | VPC Flow Logs, GuardDuty | Monthly |
+| Vulnerability management | ECR scanning, Dependabot | Automated alerts | Continuous |
+| Secrets management | AWS Secrets Manager | Rotation monitoring | 90-day rotation |
+| Logging and audit | CloudTrail, CloudWatch, VPC Flow Logs | Centralized SIEM | Continuous |
+
+### 5.2 Security Review Requirements
+
+| Event | Security Review Required | Reviewer |
+|-------|------------------------|----------|
+| New AWS service adoption | Yes | Security Lead + CCoE |
+| Architecture change | Yes | Security Lead |
+| Third-party integration | Yes | Security Lead + CISO |
+| Production deployment | Automated scan | CI/CD pipeline |
+| Incident response | Post-incident review | Security Team |
+
+---
+
+## 6. Compliance Governance
+
+### 6.1 Compliance Requirements
+
+| Regulation | Applicability | Key Requirements | Owner |
+|-----------|--------------|------------------|-------|
+| **FERPA** | Student data | Access controls, data privacy, breach notification | CISO |
+| **HIPAA** | Health-related data | PHI protection, BAA with AWS, encryption | CISO |
+| **SOC 2** | Service organization | Security, availability, processing integrity | Security Lead |
+| **PCI-DSS** | Payment processing | Network segmentation, encryption, access control | Security Lead |
+| **GLBA** | Financial data | Safeguards rule, privacy notices | Compliance Officer |
+
+### 6.2 Compliance Monitoring
+
+- **Automated:** AWS Config rules, Security Hub, Macie for data classification
+- **Manual:** Quarterly access reviews, annual penetration testing
+- **Audit trail:** CloudTrail enabled in all accounts, 365-day retention
+- **Reporting:** Monthly compliance dashboard, quarterly compliance report
+
+---
+
+## 7. Architecture Decision Record (ADR) Process
+
+### 7.1 ADR Template
+
+```markdown
+# ADR-NNNN: <Title>
+
+**Date:** YYYY-MM-DD
+**Author:** <Name>
+**Status:** Proposed | Accepted | Deprecated | Superseded
+**Deciders:** <Governance Board members>
+
+## Context
+<What is the issue that we are seeing that is motivating this decision?>
+
+## Decision
+<What is the change that we are proposing and/or doing?>
+
+## Consequences
+<What becomes easier or more difficult because of this change?>
+
+## Alternatives Considered
+<What other options were evaluated?>
+```
+
+### 7.2 ADR Process
+
+1. **Draft:** Author creates ADR using template, assigns ADR number
+2. **Review:** CCoE reviews for technical merit (5 business days)
+3. **Discussion:** Governance Board discusses at next meeting
+4. **Decision:** Board votes (majority required, quorum = 3 members)
+5. **Record:** ADR stored in `docs/architecture/decisions/` in Git
+6. **Communication:** Decision communicated via Slack and email
+
+### 7.3 Existing ADRs
+
+| ADR | Title | Status | Date |
+|-----|-------|--------|------|
+| ADR-001 | Use FastAPI as API framework | Accepted | 2026-01-15 |
+| ADR-002 | PostgreSQL on RDS as primary data store | Accepted | 2026-01-15 |
+| ADR-003 | ECS Fargate for container orchestration | Accepted | 2026-01-20 |
+| ADR-004 | Use Terraform for infrastructure as code | Accepted | 2026-01-20 |
+| ADR-005 | Redis ElastiCache for caching layer | Accepted | 2026-01-25 |
+| ADR-006 | Pydantic for configuration management | Accepted | 2026-02-01 |
+
+---
+
+## 8. Risk Management Framework
+
+### 8.1 Risk Register
+
+| ID | Risk | Likelihood | Impact | Mitigation | Owner |
+|----|------|-----------|--------|------------|-------|
+| R-001 | Cloud vendor lock-in | Medium | High | Multi-cloud abstraction layer, IaC portability | Cloud Architect |
+| R-002 | Data breach / FERPA violation | Low | Critical | Encryption, access controls, audit trails | CISO |
+| R-003 | Unplanned cloud cost overrun | Medium | Medium | Budget alerts, RI/SP, cost tagging | FinOps Analyst |
+| R-004 | Key personnel departure | Medium | High | Documentation, cross-training, knowledge base | Gopi Krishna Vajrala |
+| R-005 | Service outage during enrollment | Low | Critical | Multi-AZ, auto-scaling, DR plan | SRE Lead |
+| R-006 | Third-party API deprecation | Medium | Medium | API abstraction layer, version monitoring | Cloud Architect |
+| R-007 | Compliance audit failure | Low | High | Automated compliance checks, regular audits | Compliance Officer |
+| R-008 | Security vulnerability in dependencies | High | Medium | Dependabot, automated scanning, patching policy | Security Lead |
+
+### 8.2 Risk Review Cadence
+
+| Activity | Frequency | Responsible |
+|----------|-----------|-------------|
+| Risk register review | Monthly | Governance Board |
+| Threat assessment | Quarterly | Security Team |
+| DR plan test | Semi-annually | SRE Team |
+| Compliance gap analysis | Annually | Compliance Officer |
+
+---
+
+## 9. SLA Definitions
+
+### 9.1 Platform SLAs
+
+| Service | Metric | Target | Measurement |
+|---------|--------|--------|-------------|
+| API Availability | Uptime | 99.9% (8.76h downtime/year) | CloudWatch health checks |
+| API Latency (p99) | Response time | <500ms | CloudWatch custom metrics |
+| API Latency (p50) | Response time | <200ms | CloudWatch custom metrics |
+| Deployment Frequency | Releases to production | >= 2/month | GitHub releases |
+| Mean Time to Recovery (MTTR) | P1 incident recovery | <1 hour | ServiceNow metrics |
+| Mean Time to Detect (MTTD) | Incident detection | <5 minutes | PagerDuty metrics |
+| Change Failure Rate | Failed deployments | <5% | CI/CD metrics |
+| Data Backup RPO | Recovery Point Objective | <1 hour | RDS point-in-time |
+| Data Backup RTO | Recovery Time Objective | <4 hours | DR test results |
+
+### 9.2 SLA Reporting
+
+- **Dashboard:** Real-time SLA dashboard in CloudWatch
+- **Weekly:** SLA compliance summary to Governance Board
+- **Monthly:** SLA report to Steering Committee with trend analysis
+- **Quarterly:** Comprehensive SLA review with improvement recommendations
+
+---
+
+## 10. Reporting Cadence
+
+| Report | Audience | Frequency | Author | Format |
+|--------|----------|-----------|--------|--------|
+| Daily operations summary | Cloud Operations | Daily | On-call SRE | Slack post |
+| Weekly status report | Governance Board | Weekly (Friday) | Gopi Krishna Vajrala | Email + Confluence |
+| Sprint review | Project team | Bi-weekly | Scrum Master | Meeting + Jira |
+| Monthly governance report | Steering Committee | Monthly | Gopi Krishna Vajrala | PowerPoint + Meeting |
+| Quarterly business review | CIO + stakeholders | Quarterly | Gopi Krishna Vajrala | Executive brief |
+| Annual technology review | Board of Trustees | Annually | CIO | Strategic report |
+
+---
+
+**Document Author:** Gopi Krishna Vajrala
+**Review Status:** Approved
+**Next Review Date:** 2026-08-16
