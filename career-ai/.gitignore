@@ -1,0 +1,10 @@
+node_modules/
+dist/
+frontend/dist/
+frontend/node_modules/
+database/career.db
+uploads/
+.env
+*.log
+.DS_Store
+Thumbs.db
